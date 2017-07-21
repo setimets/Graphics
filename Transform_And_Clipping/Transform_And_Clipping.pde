@@ -39,9 +39,7 @@ void draw()
   };
   */
   
-  
   r += 0.01f;
-  
   
   float[][] tm = new float[][]
   {
@@ -140,6 +138,7 @@ void DrawRect(PVector p0, PVector p1, PVector p2, PVector p3)
   line(p3.x, p3.y, p0.x, p0.y);
 }
 
+// https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
 PVector LineIntersection(PVector p1, PVector p2, PVector p3, PVector p4)
 {
   PVector r = new PVector();
@@ -192,6 +191,7 @@ ArrayList CopyList(ArrayList t)
   return r;
 }
 
+// https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
 PVector[] Clipping(float x, float y, float w, float h, PVector[] vertices)
 {
   ArrayList r = CreateList(vertices);
