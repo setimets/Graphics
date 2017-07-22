@@ -103,15 +103,16 @@ void draw()
     pa[i] = TransformPoint(tt, box[i]);
   }
   
-  PVector[] p = Clipping(10, 10, 320, 180, pa);
+  PVector[] p = SHClipping(10, 10, 320, 180, pa);
   
   for(int i=1;i<p.length;++i)
   {
     line(p[i-1].x, p[i-1].y, p[i].x, p[i].y);
   }
+  
   //DrawRect(pa[0], pa[1], pa[2], pa[3]);
   //DrawRect(pa[4], pa[5], pa[6], pa[7]);
-   //<>//
+   //<>// //<>//
   //line(pa[0].x, pa[0].y, pa[4].x, pa[4].y);
   //line(pa[1].x, pa[1].y, pa[5].x, pa[5].y);
   //line(pa[2].x, pa[2].y, pa[6].x, pa[6].y);
@@ -192,7 +193,8 @@ ArrayList CopyList(ArrayList t)
 }
 
 // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
-PVector[] Clipping(float x, float y, float w, float h, PVector[] vertices)
+// Sutherland-Hodgman.
+PVector[] SHClipping(float x, float y, float w, float h, PVector[] vertices)
 {
   ArrayList r = CreateList(vertices);
   PVector[] p = new PVector[5];
@@ -248,10 +250,6 @@ PVector[] Clipping(float x, float y, float w, float h, PVector[] vertices)
     ret[k] = (PVector)r.get(k);
   }
   return ret;
-}
-
-void DrawGrid()
-{
 }
 
 float[][] Viewport(float x, float y, float w, float h)
