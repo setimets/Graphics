@@ -21,6 +21,7 @@ void draw()
     new PVector(-x, -y, -z), new PVector(x, -y, -z),
   };
   
+  /*
   PVector[] box0 = new PVector[]
   {
     new PVector(x, y, z), new PVector(-x, y, z),
@@ -29,6 +30,7 @@ void draw()
     new PVector(x, y, -z), new PVector(-x, y, -z),
     new PVector(-x, -y, -z), new PVector(x, -y, -z),
   };
+  */
   
   /*
   float[][] pm = new float[][]
@@ -203,6 +205,7 @@ ArrayList CopyList(ArrayList t)
   return r;
 }
 
+// TODO : https://en.wikipedia.org/wiki/Weiler%E2%80%93Atherton_clipping_algorithm
 // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
 // Sutherland-Hodgman.
 PVector[] SHClipping(float x, float y, float w, float h, PVector[] vertices)
