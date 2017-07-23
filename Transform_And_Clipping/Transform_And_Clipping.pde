@@ -1,3 +1,4 @@
+
 void setup() 
 {
   size(640, 360); 
@@ -13,8 +14,8 @@ void draw()
   
   PVector[] box = new PVector[]
   {
-    new PVector(x, y, z), new PVector(-x, y, z),
-    new PVector(-x, -y, z), new PVector(x, -y, z),
+    new PVector(-x, y, z), new PVector(x, y, z),
+    new PVector(x, -y, z), new PVector(-x, -y, z),
     
     new PVector(x, y, -z), new PVector(-x, y, -z),
     new PVector(-x, -y, -z), new PVector(x, -y, -z),
@@ -103,16 +104,35 @@ void draw()
     pa[i] = TransformPoint(tt, box[i]);
   }
   
-  PVector[] p = SHClipping(10, 10, 320, 180, pa);
-  
-  for(int i=1;i<p.length;++i)
+  int[] pi = new int[]
   {
-    line(p[i-1].x, p[i-1].y, p[i].x, p[i].y);
+    0, 1, 2, 3,
+    1, 4, 7, 2,
+    4, 5, 6, 7,
+    5, 0, 3, 6,
+  };
+  
+  for(int i=0;i<pi.length;i+=4)
+  {
+    PVector[] pt = new PVector[]
+    {
+      pa[pi[i]], pa[pi[i+1]], pa[pi[i+2]], pa[pi[i+3]]
+    };
+    
+    PVector[] p = SHClipping(10, 10, 320, 180, pt);
+    
+    for(int j=1;j<p.length;++j)
+    {
+      line(p[j-1].x, p[j-1].y, p[j].x, p[j].y);
+    }
+    line(p[0].x, p[0].y, p[p.length-1].x, p[p.length-1].y);
   }
   
+  PVector[] p = SHClipping(10, 10, 320, 180, pa);
+  
   //DrawRect(pa[0], pa[1], pa[2], pa[3]);
-  //DrawRect(pa[4], pa[5], pa[6], pa[7]);
-   //<>// //<>//
+  //DrawRect(pa[4], pa[5], pa[6], pa[7]);s
+  
   //line(pa[0].x, pa[0].y, pa[4].x, pa[4].y);
   //line(pa[1].x, pa[1].y, pa[5].x, pa[5].y);
   //line(pa[2].x, pa[2].y, pa[6].x, pa[6].y);
@@ -163,6 +183,7 @@ PVector LineIntersection(PVector p1, PVector p2, PVector p3, PVector p4)
   }
   //float t = (p4.x - p3.x) * (p1.y - p3.x) 
   
+  // I don't know that How to prove line intersection by matrix determinant.
   r.x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)) 
         / ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
   
