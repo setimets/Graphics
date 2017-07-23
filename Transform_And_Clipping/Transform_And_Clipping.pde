@@ -128,16 +128,6 @@ void draw()
     line(p[0].x, p[0].y, p[p.length-1].x, p[p.length-1].y);
   }
   
-  PVector[] p = SHClipping(10, 10, 320, 180, pa);
-  
-  //DrawRect(pa[0], pa[1], pa[2], pa[3]);
-  //DrawRect(pa[4], pa[5], pa[6], pa[7]);s
-  
-  //line(pa[0].x, pa[0].y, pa[4].x, pa[4].y);
-  //line(pa[1].x, pa[1].y, pa[5].x, pa[5].y);
-  //line(pa[2].x, pa[2].y, pa[6].x, pa[6].y);
-  //line(pa[3].x, pa[3].y, pa[7].x, pa[7].y);
-  
   DrawRect(10, 10, 320, 180);
   
   //box(200);
