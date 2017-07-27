@@ -2,12 +2,29 @@
 void setup() 
 {
   size(640, 360); 
+  
+  
+  Matrix4x4 mat = new Matrix4x4(new float[] 
+  {
+    2,0,0,10,
+    0,2,0,10,
+    0,0,1,0,
+    0,0,0,1
+  });
+  
+  mat.Inverse();
+  
+  println(mat.E);
+  
 }
-//Angle
+
 float r;
 
 void draw() 
 {
+  
+ 
+  
   float x = 50;
   float y = 50;
   float z = 50;
@@ -175,7 +192,7 @@ PVector LineIntersection(PVector p1, PVector p2, PVector p3, PVector p4)
   }
   //float t = (p4.x - p3.x) * (p1.y - p3.x) 
   
-  // I don't know that How to prove line intersection by matrix determinant.
+  // I don't know that how to prove line intersection by matrix determinant.
   r.x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)) 
         / ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
   
