@@ -2,29 +2,12 @@
 void setup() 
 {
   size(640, 360); 
-  
-  
-  Matrix4x4 mat = new Matrix4x4(new float[] 
-  {
-    2,0,0,10,
-    0,2,0,10,
-    0,0,1,0,
-    0,0,0,1
-  });
-  
-  mat.Inverse();
-  
-  println(mat.E);
-  
 }
 
-float r;
+float rad;
 
 void draw() 
 {
-  
- 
-  
   float x = 50;
   float y = 50;
   float z = 50;
@@ -39,17 +22,6 @@ void draw()
   };
   
   /*
-  PVector[] box0 = new PVector[]
-  {
-    new PVector(x, y, z), new PVector(-x, y, z),
-    new PVector(-x, -y, z), new PVector(x, -y, z),
-    
-    new PVector(x, y, -z), new PVector(-x, y, -z),
-    new PVector(-x, -y, -z), new PVector(x, -y, -z),
-  };
-  */
-  
-  /*
   float[][] pm = new float[][]
   {
     { 1 / (aspect * t) , 0, 0, 0 },
@@ -59,13 +31,13 @@ void draw()
   };
   */
   
-  r += 0.01f;
+  rad += 0.01f;
   
   float[][] tm = new float[][]
   {
     {1, 0, 0, 0},
     {0, 1, 0, 0},
-    {0, 0, 1, -200 + -100 * sin(r)},
+    {0, 0, 1, -200 + -100 * sin(rad)},
     {0, 0, 0, 1}
   };
   
@@ -84,9 +56,9 @@ void draw()
   // pitch
   float[][] rm = new float[][]
   {
-    {cos(r), 0, sin(r), 0},
+    {cos(rad), 0, sin(rad), 0},
     {0, 1, 0, 0},
-    {-sin(r), 0, cos(r), 0},
+    {-sin(rad), 0, cos(rad), 0},
     {0, 0, 0, 1}
   };
   
@@ -105,14 +77,23 @@ void draw()
   background(0);
   stroke(255);
   noFill();
-  float [][] sm = Viewport(10, 10, 320, 180);
   
+  Vector2 t0 = Vector2.Sub(new Vector2(mouseX, mouseY), new Vector2(40, 40));
+  Vector2 t1 = new Vector2(1, 0);
+  Vector2 t2 = Vector2.Project(t0, t1);
+  
+  stroke(255, 0, 0);
+  line(40, 40, 40 + t0.x, 40 + t0.y);
+  stroke(0, 255, 0);
+  line(40, 40, 40 + t2.x, 40 + t2.y);
+  
+  float[][] sm = Viewport(10, 10, 320, 180);
   float[][] pm = Perspective(45f, 1, 1000);
   float[][] mm = Multiply(tm, rm);
   float[][] wm = mm;
   
   //float[][] vm = Camera(new PVector(1, 0, 0), new PVector(0, 1, 0), new PVector(0, 0, 1), new PVector(sin(r) * 50, 0, -50));
-  float[][] vm = CameraLookAt(new PVector(sin(r) * 50, 0, -50), new PVector(0, 0, -200 + -100 * sin(r)), new PVector(0, 1, 0));
+  float[][] vm = CameraLookAt(new PVector(sin(rad) * 50, 0, -50), new PVector(0, 0, -200 + -100 * sin(rad)), new PVector(0, 1, 0));
   float[][] wvp = Multiply(Multiply(pm, vm), wm);
   float[][] tt = Multiply(sm, wvp);
   
@@ -169,38 +150,6 @@ void DrawRect(PVector p0, PVector p1, PVector p2, PVector p3)
 }
 
 // https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-PVector LineIntersection(PVector p1, PVector p2, PVector p3, PVector p4)
-{
-  PVector r = new PVector();
-  
-  if((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x) == 0)
-  {
-    r.x = Float.NaN;
-    r.y = Float.NaN;
-    return r;
-  }
-  
-  float den = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
-  float ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / den;
-  float ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / den;
-  
-  if(!((ua > 0 && ua < 1) && (ub > 0 && ub < 1)))
-  {
-    r.x = Float.NaN;
-    r.y = Float.NaN;
-    return r;
-  }
-  //float t = (p4.x - p3.x) * (p1.y - p3.x) 
-  
-  // I don't know that how to prove line intersection by matrix determinant.
-  r.x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)) 
-        / ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
-  
-  r.y = ((p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x)) 
-        / ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
-        
-  return r;
-}
 
 ArrayList CreateList(PVector[] vertices)
 {
@@ -262,13 +211,13 @@ PVector[] SHClipping(float x, float y, float w, float h, PVector[] vertices)
       {
         if(!insideS)
         {
-          r.add(LineIntersection(s, e, p[i-1], p[i]));
+          r.add(Line.Intersection(s, e, p[i-1], p[i]));
         }
         r.add(e);
       }
       else if(insideS) 
       {
-        r.add(LineIntersection(s, e, p[i-1], p[i]));
+        r.add(Line.Intersection(s, e, p[i-1], p[i]));
       }
       
       s = e;

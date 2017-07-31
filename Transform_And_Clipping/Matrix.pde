@@ -85,9 +85,9 @@ static class Matrix3x3
     return r;
   }
   
-  static Matrix4x4 Multiply(Matrix4x4 m0, Matrix4x4 m1)
+  static Matrix3x3 Multiply(Matrix3x3 m0, Matrix3x3 m1)
   {
-    return new Matrix4x4(Multiply(m0.E, m1.E)); 
+    return new Matrix3x3(Multiply(m0.E, m1.E)); 
   }
   
   static float[] Multiply(float[] m0, float[] m1)
@@ -100,6 +100,31 @@ static class Matrix3x3
       {
         r[i * 3 + j] = (m0[i*3] * m1[j]) + (m0[i*3 + 1] * m1[j + 3]) + (m0[i*3 + 2] * m1[j + 6]); 
       }
+    }
+    return r;
+  }
+  
+  
+  Vector2 TransformVector(Vector2 p)
+  {
+    Vector2 r = new Vector2(); 
+    r.x = E[0] * p.x + E[1] * p.y + E[2];
+    r.y = E[3] * p.x + E[4] * p.y + E[5];
+    
+    return r;
+  }
+  
+  Vector2 TransformPoint(Vector2 p)
+  {
+    Vector2 r = new Vector2(); 
+    r.x = E[0] * p.x + E[1] * p.y + E[2];
+    r.y = E[4] * p.x + E[5] * p.y + E[6];
+    
+    float z = E[7] * p.x + E[8] * p.y + E[8];
+    
+    if(z != 1) {
+      r.x /= z;
+      r.y /= z;
     }
     return r;
   }

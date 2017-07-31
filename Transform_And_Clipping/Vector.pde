@@ -16,6 +16,12 @@ static class Vector2
     this.y = y;
   }
   
+  Vector2(PVector v)
+  {
+    this.x = v.x;
+    this.y = v.y;
+  }
+  
   void Add(Vector2 v)
   {
     x += v.x;
@@ -51,6 +57,11 @@ static class Vector2
     return x * x + y * y;
   }
   
+  PVector ToVector3()
+  {
+    return new PVector(x, y, 0);
+  }
+  
   static Vector2 Add(Vector2 v0, Vector2 v1)
   {
     return new Vector2(v0.x + v1.x, v0.y + v1.y);
@@ -69,6 +80,14 @@ static class Vector2
   static float Cross(Vector2 v0, Vector2 up)
   {
     return v0.x * up.y - up.x * v0.y;
+  }
+  
+  static float Angle(Vector2 v0, Vector2 v1)
+  {
+    float sin = v0.x * v1.y - v1.x * v0.y; // cross
+    float cos = v0.x * v1.x + v0.y * v1.y; // dot
+
+    return atan2(sin, cos) * (180 / PI);
   }
   
   static Vector2 Normalize(Vector2 v)
