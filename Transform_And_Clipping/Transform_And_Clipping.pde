@@ -21,6 +21,13 @@ void draw()
     new PVector(-x, -y, -z), new PVector(x, -y, -z),
   };
   
+  Vertex[] vb = new Vertex[] 
+  { 
+    new Vertex(60.2f, 10.6f, 0f, new Color(1f, 0f, 0f, 1f)), 
+    new Vertex(90.0f, 70.0f, 0f, new Color(0f, 1f, 0f, 1f)), 
+    new Vertex(8f,    40.3f, 0f, new Color(0f, 0f, 1f, 1f)) 
+  };
+  
   /*
   float[][] pm = new float[][]
   {
@@ -78,14 +85,18 @@ void draw()
   stroke(255);
   noFill();
   
-  Vector2 t0 = Vector2.Sub(new Vector2(mouseX, mouseY), new Vector2(40, 40));
-  Vector2 t1 = new Vector2(1, 0);
-  Vector2 t2 = Vector2.Project(t0, t1);
+  ArrayList<Pixel> fb = Rasterizer.ScanConversion(vb[0], vb[1], vb[2]);
   
-  stroke(255, 0, 0);
-  line(40, 40, 40 + t0.x, 40 + t0.y);
-  stroke(0, 255, 0);
-  line(40, 40, 40 + t2.x, 40 + t2.y);
+  println("");
+  for(Pixel p : fb)
+  {
+    int r = (int)(p.c.r * 255);
+    int g = (int)(p.c.g * 255);
+    int b = (int)(p.c.b * 255);
+    color cc = color(r, g, b);
+    
+    set((int)p.x, (int)p.y, cc); //<>//
+  }
   
   float[][] sm = Viewport(10, 10, 320, 180);
   float[][] pm = Perspective(45f, 1, 1000);
@@ -111,6 +122,7 @@ void draw()
     4, 5, 6, 7,
     5, 0, 3, 6,
   };
+  /*
   
   for(int i=0;i<pi.length;i+=4)
   {
@@ -129,7 +141,7 @@ void draw()
   }
   
   DrawRect(10, 10, 320, 180);
-  
+  */
   //box(200);
 }
 
