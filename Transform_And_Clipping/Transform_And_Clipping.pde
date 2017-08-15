@@ -21,13 +21,6 @@ void draw()
     new PVector(-x, -y, -z), new PVector(x, -y, -z),
   };
   
-  Vertex[] vb = new Vertex[] 
-  { 
-    new Vertex(60.2f, 10.6f, 0f, new Color(1f, 0f, 0f, 1f)), 
-    new Vertex(90.0f, 70.0f, 0f, new Color(0f, 1f, 0f, 1f)), 
-    new Vertex(8f,    40.3f, 0f, new Color(0f, 0f, 1f, 1f)) 
-  };
-  
   /*
   float[][] pm = new float[][]
   {
@@ -85,8 +78,67 @@ void draw()
   stroke(255);
   noFill();
   
-  ArrayList<Pixel> fb = Rasterizer.ScanConversion(vb[0], vb[1], vb[2]);
   
+  Vertex[] vb = new Vertex[] 
+  { 
+    //new Vertex(30f, 90f, 0f, new Color(1f, 0f, 0f, 1f)), 
+    //new Vertex(60f, 60f, 0f, new Color(0f, 1f, 0f, 1f)),
+    //new Vertex(90f, 90f, 0f, new Color(0f, 0f, 1f, 1f)),
+    new Vertex(100f, 100f, 0f, new Color(1f, 0f, 0f, 1f)),
+    new Vertex(mouseX, mouseY, 0f, new Color(0f, 1f, 0f, 1f)),
+    new Vertex(8f, 40.3f, 0f, new Color(0f, 0f, 1f, 1f)) 
+  };
+  
+  //ArrayList<Pixel> fb = Rasterizer.ScanLine(vb[0], vb[1], vb[2]);
+  //ArrayList<Pixel> fb = Rasterizer.DrawBresenHamLine(vb[0], vb[1]);
+  //ArrayList<Pixel> fb = Rasterizer.DrawDDALine(vb[0], vb[1]);
+  
+  Edge[] edges = new Edge[] 
+  {
+    new Edge(vb[0], vb[1]), new Edge(vb[1], vb[2]), new Edge(vb[2], vb[0])
+  };
+  
+  AET aet = new AET(edges);
+  
+  aet.Create();
+  
+  for(ScanLine line : aet.lines)
+  {
+    int size = line.intersectX.size();
+    for(int i=0;i<size && size % 2 == 0; i+=2)
+    {
+      Edge e = new Edge(line.intersectX.get(i), line.intersectX.get(i+1));
+      int len = e.Length();
+      for(int j=0;j<len;++j)
+      {
+        Pixel p = e.Interpolate(j/(float)len);
+        int r = (int)(p.c.r * 255);
+        int g = (int)(p.c.g * 255);
+        int b = (int)(p.c.b * 255);
+        color cc = color(r, g, b);
+        
+        set((int)p.x, (int)p.y, cc);
+      }
+    }
+  }
+  
+  /*
+  Edge edge = new Edge(vb[0], vb[1]);
+  
+  int len = edge.Length();
+  for(int i=0;i<len;++i)
+  {
+    Pixel p = edge.Interpolate(i/(float)len);
+    int r = (int)(p.c.r * 255);
+    int g = (int)(p.c.g * 255);
+    int b = (int)(p.c.b * 255);
+    color cc = color(r, g, b);
+    
+    set((int)p.x, (int)p.y, cc);
+  }
+  */
+  
+  /*
   println("");
   for(Pixel p : fb)
   {
@@ -95,11 +147,13 @@ void draw()
     int b = (int)(p.c.b * 255);
     color cc = color(r, g, b);
     
-    set((int)p.x, (int)p.y, cc); //<>//
+    set((int)p.x, (int)p.y, cc);
   }
+  */
   
   float[][] sm = Viewport(10, 10, 320, 180);
   float[][] pm = Perspective(45f, 1, 1000);
+  
   float[][] mm = Multiply(tm, rm);
   float[][] wm = mm;
   
@@ -223,13 +277,13 @@ PVector[] SHClipping(float x, float y, float w, float h, PVector[] vertices)
       {
         if(!insideS)
         {
-          r.add(Line.Intersection(s, e, p[i-1], p[i]));
+          r.add(Line2D.Intersection(s, e, p[i-1], p[i]));
         }
         r.add(e);
       }
       else if(insideS) 
       {
-        r.add(Line.Intersection(s, e, p[i-1], p[i]));
+        r.add(Line2D.Intersection(s, e, p[i-1], p[i]));
       }
       
       s = e;

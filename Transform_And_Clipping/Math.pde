@@ -1,3 +1,120 @@
+static class Vector2f
+{
+  float x;
+  float y;
+  
+  Vector2f()
+  {
+    x = 0;
+    y = 0;
+  }
+  
+  Vector2f(int x, int y)
+  {
+    this.x = (float)x;
+    this.y = (float)y;
+  }
+  
+  Vector2f(float x, float y)
+  {
+    this.x = x;
+    this.y = y;
+  }
+  
+  Vector2f(PVector v)
+  {
+    this.x = v.x;
+    this.y = v.y;
+  }
+  
+  Vector2f(Vector2f v)
+  {
+    this.x = v.x;
+    this.y = v.y;
+  }
+  
+  void Add(Vector2f v)
+  {
+    x += v.x;
+    y += v.y;
+  }
+  
+  void Sub(Vector2f v)
+  {
+    x -= v.x;
+    y -= v.y;
+  }
+  
+  void Scale(float s)
+  {
+    x *= s;
+    y *= s;
+  }
+  
+  void Normalize()
+  {
+    float mag = Magnitude();
+    x = x / mag;
+    y = y / mag;
+  }
+  
+  float Magnitude()
+  {
+    return sqrt(x * x + y * y);
+  }
+  
+  float SqrMagnitude()
+  {
+    return x * x + y * y;
+  }
+  
+  PVector ToVector3()
+  {
+    return new PVector(x, y, 0);
+  }
+  
+  static Vector2f Add(Vector2f v0, Vector2f v1)
+  {
+    return new Vector2f(v0.x + v1.x, v0.y + v1.y);
+  }
+  
+  static Vector2f Sub(Vector2f v0, Vector2f v1)
+  {
+    return new Vector2f(v0.x - v1.x, v0.y - v1.y);
+  }
+  
+  static float Dot(Vector2f v0, Vector2f v1)
+  {
+    return v0.x * v1.x + v0.y * v1.y;
+  }
+  
+  static float Cross(Vector2f v0, Vector2f up)
+  {
+    return v0.x * up.y - up.x * v0.y;
+  }
+  
+  static float Angle(Vector2f v0, Vector2f v1)
+  {
+    float sin = v0.x * v1.y - v1.x * v0.y; // cross
+    float cos = v0.x * v1.x + v0.y * v1.y; // dot
+
+    return atan2(sin, cos) * (180 / PI);
+  }
+  
+  static Vector2f Normalize(Vector2f v)
+  {
+    float mag = v.Magnitude();
+    return new Vector2f(v.x / mag, v.y / mag);
+  }
+  
+  static Vector2f Project(Vector2f v, Vector2f n)
+  {
+    Vector2f r = Normalize(n);
+    r.Scale(Dot(v, r));
+    return r;
+  }
+}
+
 // Row major.
 
 static class Matrix3x3
@@ -105,18 +222,18 @@ static class Matrix3x3
   }
   
   
-  Vector2 TransformVector(Vector2 p)
+  Vector2f TransformVector(Vector2f p)
   {
-    Vector2 r = new Vector2(); 
+    Vector2f r = new Vector2f(); 
     r.x = E[0] * p.x + E[1] * p.y + E[2];
     r.y = E[3] * p.x + E[4] * p.y + E[5];
     
     return r;
   }
   
-  Vector2 TransformPoint(Vector2 p)
+  Vector2f TransformPoint(Vector2f p)
   {
-    Vector2 r = new Vector2(); 
+    Vector2f r = new Vector2f(); 
     r.x = E[0] * p.x + E[1] * p.y + E[2];
     r.y = E[4] * p.x + E[5] * p.y + E[6];
     
