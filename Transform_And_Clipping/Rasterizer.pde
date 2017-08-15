@@ -433,5 +433,87 @@ static class Rasterizer
     
     return r;
   }
+    
+    
+  private static ArrayList CreateList(PVector[] vertices)
+  {
+    ArrayList r = new ArrayList();
+    for(int i=0;i<vertices.length;++i)
+    {
+      r.add(vertices[i]);
+    }
+    return r;
+  }
   
+  private static ArrayList CopyList(ArrayList t)
+  {
+    ArrayList r = new ArrayList();
+    for(int i=0;i<t.size();++i)
+    {
+      r.add(t.get(i));
+    }
+    return r;
+  }
+  
+  // TODO : https://en.wikipedia.org/wiki/Weiler%E2%80%93Atherton_clipping_algorithm
+  // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
+  // Sutherland-Hodgman.
+  static PVector[] SHClipping(float x, float y, float w, float h, PVector[] vertices)
+  {
+    ArrayList r = CreateList(vertices);
+    PVector[] p = new PVector[5];
+    
+    p[0] = new PVector(x, y);
+    p[1] = new PVector(x, y + h);
+    p[2] = new PVector(x + w, y + h);
+    p[3] = new PVector(x + w, y);
+    p[4] = new PVector(x, y);
+    
+    for(int i=1;i<p.length;++i)
+    {
+      PVector v = PVector.sub(p[i], p[i-1]);
+      PVector xAxis = v.normalize();
+      PVector yAxis = xAxis.cross(new PVector(0, 0, 1)).normalize();
+      
+      ArrayList in = CopyList(r);
+      r.clear();
+      
+      PVector s = (PVector)in.get(in.size()-1);
+      for(int j=0;j<in.size();++j)
+      {
+        PVector e = (PVector)in.get(j);
+        
+        PVector vs = PVector.sub(s, p[i-1]);
+        PVector ve = PVector.sub(e, p[i-1]);
+        
+        float dsy = yAxis.dot(vs);
+        float dey = yAxis.dot(ve);
+        Boolean insideS = dsy > 0;
+        Boolean insideE = dey > 0;
+        
+        if(insideE)
+        {
+          if(!insideS)
+          {
+            r.add(Line2D.Intersection(s, e, p[i-1], p[i]));
+          }
+          r.add(e);
+        }
+        else if(insideS) 
+        {
+          r.add(Line2D.Intersection(s, e, p[i-1], p[i]));
+        }
+        
+        s = e;
+      }
+    }
+    
+    PVector[] ret = new PVector[r.size()];
+    for(int k=0;k<ret.length;++k)
+    {
+      ret[k] = (PVector)r.get(k);
+    }
+    return ret;
+  }
+
 }

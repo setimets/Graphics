@@ -473,7 +473,7 @@ static class Matrix4x4
     }
     return r;
   }
-
+  
   static Matrix4x4 Multiply(Matrix4x4 m0, Matrix4x4 m1)
   {
     return new Matrix4x4(Multiply(m0.E, m1.E)); 
@@ -491,5 +491,67 @@ static class Matrix4x4
       }
     }
     return r;
+  }
+  
+  
+  static Matrix4x4 Viewport(float x, float y, float w, float h)
+  {
+    float[] sm = new float[]
+    {
+      w, 0, 0, x + w * 0.5f,
+      0, -h, 0, y + h * 0.5f,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    };
+    return new Matrix4x4(sm);
+  }
+  
+  static Matrix4x4 LookAt(PVector pos, PVector target, PVector up)
+  {
+    PVector z = PVector.sub(target, pos);
+    z.normalize();
+    
+    PVector x = up.cross(z);
+    x.normalize();
+    
+    PVector y = z.cross(x);
+    
+    float[] cm = new float[]
+    {
+      x.x, y.x, z.x, 0,
+      x.y, y.y, z.y, 0,
+      x.z, y.z, z.z, 0,
+      0,0,0,1
+    };
+    
+    float[] tm = new float[]
+    {
+      1, 0, 0, -pos.x,
+      0, 1, 0, -pos.y,
+      0, 0, 1, -pos.z,
+      0, 0, 0, 1,
+    };
+    
+    return new Matrix4x4(Multiply(tm, cm));
+  }
+  
+  static Matrix4x4 Perspective(int screenW, int screenH, float angle, float near, float far)
+  {
+    float fov = ((angle * 0.5f * PI) / 180f);
+    float n = near;
+    float f = far;
+    float aspect = screenW/(float)screenH;
+    float t = tan(fov);
+    float h = 1 / t;
+    
+    float[] pm = new float[]
+    {
+      h / aspect , 0, 0, 0,
+      0, h, 0, 0,
+      0, 0,  (f+n) / (n-f), -1,
+      0, 0, (2*n*f) / (n-f), 0
+    };
+    
+    return new Matrix4x4(pm);
   }
 }
