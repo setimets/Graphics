@@ -51,5 +51,16 @@ static class Bound3D
     extend.y = abs(v.y - center.y);
     extend.z = abs(v.z - center.z);
   }
+  
+  
+  public PVector Min()
+  {
+    return new PVector(center.x - extend.x, center.y - extend.y, center.z - extend.z);
+  }
+  
+  public PVector Max()
+  {
+    return new PVector(center.x + extend.x, center.y + extend.y, center.z + extend.z);
+  }
 }
  

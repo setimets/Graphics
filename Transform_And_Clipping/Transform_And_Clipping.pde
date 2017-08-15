@@ -92,35 +92,13 @@ void draw()
   //ArrayList<Pixel> fb = Rasterizer.ScanLine(vb[0], vb[1], vb[2]);
   //ArrayList<Pixel> fb = Rasterizer.DrawBresenHamLine(vb[0], vb[1]);
   //ArrayList<Pixel> fb = Rasterizer.DrawDDALine(vb[0], vb[1]);
+  ArrayList<Pixel> fb = Rasterizer.Triangle(vb[0], vb[1], vb[2]);
   
   Edge[] edges = new Edge[] 
   {
     new Edge(vb[0], vb[1]), new Edge(vb[1], vb[2]), new Edge(vb[2], vb[0])
   };
   
-  AET aet = new AET(edges);
-  
-  aet.Create();
-  
-  for(ScanLine line : aet.lines)
-  {
-    int size = line.intersectX.size();
-    for(int i=0;i<size && size % 2 == 0; i+=2)
-    {
-      Edge e = new Edge(line.intersectX.get(i), line.intersectX.get(i+1));
-      int len = e.Length();
-      for(int j=0;j<len;++j)
-      {
-        Pixel p = e.Interpolate(j/(float)len);
-        int r = (int)(p.c.r * 255);
-        int g = (int)(p.c.g * 255);
-        int b = (int)(p.c.b * 255);
-        color cc = color(r, g, b);
-        
-        set((int)p.x, (int)p.y, cc);
-      }
-    }
-  }
   
   /*
   Edge edge = new Edge(vb[0], vb[1]);
@@ -138,8 +116,6 @@ void draw()
   }
   */
   
-  /*
-  println("");
   for(Pixel p : fb)
   {
     int r = (int)(p.c.r * 255);
@@ -149,7 +125,6 @@ void draw()
     
     set((int)p.x, (int)p.y, cc);
   }
-  */
   
   float[][] sm = Viewport(10, 10, 320, 180);
   float[][] pm = Perspective(45f, 1, 1000);

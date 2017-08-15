@@ -193,7 +193,6 @@ static class Triangle
     bounds = new Bound3D(new PVector(min.x + extend.x, min.y + extend.y, min.z + extend.z), extend);
   }
   
-  
   PVector BarycentricCoords(Vector2f p)
   {
     return BarycentricCoords(vertice[0], vertice[1], vertice[2], p);

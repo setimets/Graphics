@@ -15,6 +15,12 @@ static class Color
     this.a = a;
   }
   
+  static Color Multify(Color c, float v)
+  {
+    Color r = new Color(c.r * v, c.g * v, c.b * v, c.a * v);
+    return r;
+  }
+  
   static Color Lerp(Color a, Color b, float t)
   {
     Color c = new Color();
@@ -236,73 +242,60 @@ static class Rasterizer
   {
     ArrayList<Pixel> r = new ArrayList<Pixel>();
     
-    //Triangle.BarycentricCoords(v0, v1, v2);
+    Triangle triangle = new Triangle(v0, v1, v2);
     
+    PVector min = triangle.bounds.Min();
+    PVector max = triangle.bounds.Max();
+    
+    for(int i=(int)min.y;i<max.y;++i)
+    {
+      for(int j=(int)min.x;j<max.x;++j)
+      {
+        PVector p = triangle.BarycentricCoords(new Vector2f(j, i));
+        
+        if(p.x >= 0 && p.y >= 0 && p.z >= 0)
+        {
+          Color a = Color.Multify(v0.c, p.x);
+          Color b = Color.Multify(v1.c, p.y);
+          Color c = Color.Multify(v2.c, p.z);
+          
+          r.add(new Pixel(j, i, new Color(a.r + b.r + c.r, a.g + b.g + c.g, a.b + b.b + c.b, a.a + b.a + c.a)));
+        }
+      }
+    }
     return r;
   }
   
-  
   static ArrayList<Pixel> ScanLine(Vertex v0, Vertex v1, Vertex v2)
   {
-    ArrayList<Pixel> r = new ArrayList<Pixel>();
+    ArrayList<Pixel> ret = new ArrayList<Pixel>();
+    AET aet = new AET(new Edge[] { new Edge(v0, v1), new Edge(v1, v2), new Edge(v2, v0) });
     
-    float s0 = (v1.x - v0.x) / (v1.y - v0.y);
-    float s1 = (v2.x - v1.x) / (v2.y - v1.y);
-    float s2 = (v0.x - v2.x) / (v0.y - v2.y);
+    aet.Create();
     
-    float[] slope = new float[] { s0, s1, s2 };
-    Vertex[] vb = new Vertex[] { v0, v1, v2, v0 };
-    
-    /*
-    for(int i=1;i<vb.length;++i)
+    for(ScanLine line : aet.lines)
     {
-      int dy = (int)(vb[i].y - vb[i-1].y);
-      int dx = (int)(vb[i].x - vb[i-1].x);
-      
-      //int d = (abs(dx) > abs(dy))? dx : dy;
-      int d = dy;
-      
-      int len = abs(d);
-      int sign = (d > 0)? 1 : -1;
-      int inc = 0;
-      
-      while(len - abs(inc) > 0)
+      int size = line.intersectX.size();
+      for(int i=0;i<size && size % 2 == 0; i+=2)
       {
-        float k = 0;
-        float rest = 0;
-        float xx = 0;
-        float yy = 0;
-        
-        if(abs(dx) > abs(dy))
+        Edge e = new Edge(line.intersectX.get(i), line.intersectX.get(i+1));
+        int len = e.Length();
+        for(int j=0;j<len;++j)
         {
-          k = ((sign > 0)? ceil(vb[i-1].x + inc) : floor(vb[i-1].x + inc));
-          rest = k - vb[i-1].x;
+          Pixel p = e.Interpolate(j/(float)len);
+          int r = (int)(p.c.r * 255);
+          int g = (int)(p.c.g * 255);
+          int b = (int)(p.c.b * 255);
           
-          xx = vb[i-1].x + inc;
-          yy = vb[i-1].y + rest * slope[i-1];
-        }
-        else 
-        {
-          k = ((sign > 0)? ceil(vb[i-1].y + inc) : floor(vb[i-1].y + inc));
-          rest = k - vb[i-1].y;
+          //color cc = color(r, g, b);
+          //set((int)p.x, (int)p.y, cc);
           
-          xx = vb[i-1].x + rest * slope[i-1];
-          yy = vb[i-1].y + inc;
+          ret.add(new Pixel(p.x, p.y, new Color(r, g, b, 1)));
         }
-        
-        float rr = vb[i-1].c.r + (slope[i-1] * ((vb[i].c.r - vb[i-1].c.r)/len));
-        float gg = vb[i-1].c.g + (slope[i-1] * ((vb[i].c.g - vb[i-1].c.g)/len));
-        float bb = vb[i-1].c.b + (slope[i-1] * ((vb[i].c.b - vb[i-1].c.b)/len));
-        
-        Color cc = new Color(rr, gg, bb, 1f);
-        Pixel pp = new Pixel(xx, yy, cc);
-        
-        r.add(pp);
-        inc += sign;
       }
     }
-    */
-    return r;
+    
+    return ret;
   }
   
   // https://www.slideshare.net/AnkitGarg22/polygon-filling-75128608
