@@ -93,6 +93,17 @@ static class Vector2f
     return v0.x * up.y - up.x * v0.y;
   }
   
+  static float Distance(Vector2f v0, Vector2f v1)
+  {
+    Vector2f v = Vector2f.Sub(v1, v0);
+    return v.Magnitude();
+  }
+  
+  static Vector2f Divide(Vector2f v0, Vector2f v1)
+  {
+    return new Vector2f(v0.x / v1.x, v0.y / v1.y);
+  }
+  
   static float Angle(Vector2f v0, Vector2f v1)
   {
     float sin = v0.x * v1.y - v1.x * v0.y; // cross
@@ -113,6 +124,8 @@ static class Vector2f
     r.Scale(Dot(v, r));
     return r;
   }
+  
+  
 }
 
 // Row major.

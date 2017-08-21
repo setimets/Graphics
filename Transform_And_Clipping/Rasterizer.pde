@@ -140,17 +140,16 @@ static class AET
       ScanLine line = lines[i] = new ScanLine();
       for(Edge e : edges)
       {
-        Vector2f p = Line2D.Intersection(new Vector2f(min.x, min.y + i), new Vector2f(max.x, min.y + i), e.p0, e.p1);
+        float Y = min.y + i;
+        Vector2f s0 = new Vector2f(min.x, Y);
+        Vector2f s1 = new Vector2f(max.x, Y);
+        
+        Vector2f p = Line2D.Intersection(s0, s1, e.p0, e.p1);
         
         if(!(Float.isNaN(p.x) || Float.isNaN(p.y)))
         {
-          float dx = (p.x - e.p0.x) / abs(e.p1.x - e.p0.x);
-          float dy = (p.y - e.p0.y) / abs(e.p1.x - e.p0.x);
-          
-          float t = max(dx, dy);
-          
-          Color c = Color.Lerp(e.p0.c, e.p1.c, t);
-          
+          float t = Vector2f.Distance(e.p0, p) / Vector2f.Distance(e.p1, e.p0);
+          Color c = Color.Lerp(e.p0.c, e.p1.c, t);          
           line.intersectX.add(new Pixel(p.x, p.y, c));
         }
       }
@@ -190,14 +189,17 @@ static class Edge
     
     if(dx > dy)
     {
-      float slope = dy / dx;
-      r = new Pixel(sx + signX * round(dx * t), sy + round(signY * slope * (dx * t)), Color.Lerp(p0.c, p1.c, t));
+      float slope = round(dy / dx);
+      
+      r = new Pixel(sx + signX * round(dx * t), sy + signY * slope * round(dx * t), Color.Lerp(p0.c, p1.c, t));
+      
       //println("dx > dy");
     }
     else 
     {
-      float slope = dx / dy;
-      r = new Pixel(sx + round(signX * slope * (dy * t)), sy + signY * round(dy * t), Color.Lerp(p0.c, p1.c, t));
+      float slope = round(dx / dy);
+      
+      r = new Pixel(sx + signX * slope * round(dy * t), sy + signY * round(dy * t), Color.Lerp(p0.c, p1.c, t));
       //println("dy > dx");
     }  
     
@@ -237,7 +239,6 @@ static class Edge
 
 static class Rasterizer 
 {
-  
   static ArrayList<Pixel> Triangle(Vertex v0, Vertex v1, Vertex v2)
   {
     ArrayList<Pixel> r = new ArrayList<Pixel>();
@@ -277,21 +278,16 @@ static class Rasterizer
     for(ScanLine line : aet.lines)
     {
       int size = line.intersectX.size();
-      for(int i=0;i<size && size % 2 == 0; i+=2)
+      for(int i=0; i < size && size % 2 == 0; i+=2)
       {
         Edge e = new Edge(line.intersectX.get(i), line.intersectX.get(i+1));
         int len = e.Length();
+        
         for(int j=0;j<len;++j)
         {
-          Pixel p = e.Interpolate(j/(float)len);
-          int r = (int)(p.c.r * 255);
-          int g = (int)(p.c.g * 255);
-          int b = (int)(p.c.b * 255);
-          
-          //color cc = color(r, g, b);
-          //set((int)p.x, (int)p.y, cc);
-          
-          ret.add(new Pixel(p.x, p.y, new Color(r, g, b, 1)));
+          float t = j/(float)len;
+          Pixel p = e.Interpolate(t);
+          ret.add(p);
         }
       }
     }

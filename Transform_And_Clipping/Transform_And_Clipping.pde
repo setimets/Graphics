@@ -8,6 +8,20 @@ float rad;
 
 void draw() 
 {
+  background(0);
+  stroke(255);
+  noFill();
+  drawStep();
+  //box(200);
+}
+
+void keyPressed()
+{
+  
+}
+
+void drawStep()
+{
   float x = 50;
   float y = 50;
   float z = 50;
@@ -42,7 +56,6 @@ void draw()
   });
   */
   
-  
   // pitch
   Matrix4x4 rm = new Matrix4x4(new float[]
   {
@@ -64,50 +77,28 @@ void draw()
   });
   */
   
-  background(0);
-  stroke(255);
-  noFill();
-  
-  
   Vertex[] vb = new Vertex[] 
   { 
     //new Vertex(30f, 90f, 0f, new Color(1f, 0f, 0f, 1f)), 
     //new Vertex(60f, 60f, 0f, new Color(0f, 1f, 0f, 1f)),
     //new Vertex(90f, 90f, 0f, new Color(0f, 0f, 1f, 1f)),
     new Vertex(100f, 100f, 0f, new Color(1f, 0f, 0f, 1f)),
+    //new Vertex(146, 20, 0f, new Color(0f, 1f, 0f, 1f)),
     new Vertex(mouseX, mouseY, 0f, new Color(0f, 1f, 0f, 1f)),
     new Vertex(8f, 40.3f, 0f, new Color(0f, 0f, 1f, 1f)) 
   };
   
-  //ArrayList<Pixel> fb = Rasterizer.ScanLine(vb[0], vb[1], vb[2]);
+  //println(mouseX, mouseY);
+  
+  ArrayList<Pixel> fb = Rasterizer.ScanLine(vb[0], vb[1], vb[2]);
   //ArrayList<Pixel> fb = Rasterizer.DrawBresenHamLine(vb[0], vb[1]);
   //ArrayList<Pixel> fb = Rasterizer.DrawDDALine(vb[0], vb[1]);
-  ArrayList<Pixel> fb = Rasterizer.Triangle(vb[0], vb[1], vb[2]);
+  //ArrayList<Pixel> fb = Rasterizer.Triangle(vb[0], vb[1], vb[2]);
   
-  Edge[] edges = new Edge[] 
+  //for(Pixel p : fb)
+  for(int i=0;i<fb.size();++i)
   {
-    new Edge(vb[0], vb[1]), new Edge(vb[1], vb[2]), new Edge(vb[2], vb[0])
-  };
-  
-  
-  /*
-  Edge edge = new Edge(vb[0], vb[1]);
-  
-  int len = edge.Length();
-  for(int i=0;i<len;++i)
-  {
-    Pixel p = edge.Interpolate(i/(float)len);
-    int r = (int)(p.c.r * 255);
-    int g = (int)(p.c.g * 255);
-    int b = (int)(p.c.b * 255);
-    color cc = color(r, g, b);
-    
-    set((int)p.x, (int)p.y, cc);
-  }
-  */
-  
-  for(Pixel p : fb)
-  {
+    Pixel p = fb.get(i);
     int r = (int)(p.c.r * 255);
     int g = (int)(p.c.g * 255);
     int b = (int)(p.c.b * 255);
@@ -160,7 +151,6 @@ void draw()
   
   DrawRect(10, 10, 320, 180);
   
-  //box(200);
 }
 
 void DrawRect(float x, float y, float w, float h)
