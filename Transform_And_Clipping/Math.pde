@@ -555,3 +555,201 @@ static class Matrix4x4
     return new Matrix4x4(pm);
   }
 }
+
+// https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
+// https://www.3dgep.com/understanding-quaternions/
+// https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+// https://gist.github.com/shihyu/c5abf3ebff2f5f1cfd32a90968f04a3b
+static class Quaternion 
+{
+  final Quaternion Identity = new Quaternion(1, 0, 0, 0);  
+  
+  float x, y, z, w;
+  
+  public Quaternion() { }
+  
+  public Quaternion(float w, float x, float y, float z)
+  {
+    this.x = x; this.y = y; this.z = z; this.w = w;
+  }
+  
+  public Quaternion(PVector axis, float angle)
+  {
+    this.x = axis.x;
+    this.y = axis.y;
+    this.z = axis.z;
+    this.w = angle;
+  }
+  
+  // https://kr.mathworks.com/help/aeroblks/quaternionmultiplication.html
+  public static Quaternion Multiply(Quaternion a, Quaternion b)
+  {
+    float q0 = a.w; float q1 = a.x; float q2 = a.y; float q3 = a.z;
+    float r0 = b.w; float r1 = b.x; float r2 = b.y; float r3 = b.z;
+    
+    float t0 = (r0 * q0 - r1 * q1 - r2 * q2 - r3 * q3);
+    float t1 = (r0 * q1 + r1 * q0 - r2 * q3 + r3 * q2);
+    float t2 = (r0 * q2 + r1 * q3 + r2 * q0 - r3 * q1);
+    float t3 = (r0 * q3 - r1 * q2 + r2 * q1 + r3 * q0);
+    
+    Quaternion ret = new Quaternion(t1, t2, t3, t0);
+    
+    return ret;
+  }
+  
+  public static PVector Multiply(Quaternion q, PVector v)
+  {
+    float e1 = q.x * 2f;
+    float e2 = q.y * 2f;
+    float e3 = q.z * 2f;
+    
+    float e4 = q.x * e1;
+    float e5 = q.y * e2;
+    float e6 = q.z * e3;
+    
+    float e7 = q.x * e2;
+    float e8 = q.x * e3;
+    float e9 = q.y * e3;
+    
+    float e10 = q.w * e1;
+    float e11 = q.w * e2;
+    float e12 = q.w * e3;
+    
+    PVector r = new PVector();
+    
+    r.x = (1f - (e5 + e6)) * v.x + (e7 - e12) * v.y + (e8 + e11) * v.z;
+    r.y = (e7 + e12) * v.x + (1 - (e4 + e6)) * v.y + (e9 - e10) * v.z;
+    r.z = (e8 - e11) * v.z + (e9 + e10) * v.y + (1f - (e4 + e5)) * v.z;
+    
+    return r;
+  }
+  
+  public void Normalize()
+  {
+    float mag = sqrt(w * w + x * x + y * y + z * z);
+    w /= mag;
+    x /= mag;
+    y /= mag;
+    z /= mag;
+  }
+  
+  public Matrix4x4 ToMatrix()
+  {
+    float xx = x * x;
+    float xy = x * y;
+    float xz = x * z;
+    float xw = x * w;
+
+    float yy = y * y;
+    float yz = y * z;
+    float yw = y * w;
+
+    float zz = z * z;
+    float zw = z * w;
+
+    float m00 = 1 - 2 * ( yy + zz );
+    float m01 = 2 * ( xy - zw );
+    float m02 = 2 * ( xz + yw );
+    
+    float m10 = 2 * ( xy + zw );
+    float m11 = 1 - 2 * ( xx + zz );
+    float m12 = 2 * ( yz - xw );
+    
+    float m20 = 2 * ( xz - yw );
+    float m21 = 2 * ( yz + xw );
+    float m22 = 1 - 2 * ( xx + yy );
+    
+    float[] a = new float[] 
+    {
+      m00, m01, m02, 0,
+      m10, m11, m12, 0,
+      m20, m21, m22, 0,
+      0, 0, 0, 1
+    };
+    
+    return new Matrix4x4(a);
+  }
+  
+  public static Quaternion Normalize(Quaternion q) 
+  {
+    float mag = sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z);
+    return new Quaternion(q.w / mag, q.x / mag, q.y / mag, q.z / mag);
+  }
+  
+  public static Quaternion Euler(float x, float y, float z)
+  {
+    Quaternion r = new Quaternion();
+    final float RAD = 0.0174532925f * 0.5f;
+    float _x = x * RAD;
+    float _y = y * RAD;
+    float _z = z * RAD;
+
+    float sinx = sin(_x);
+    float siny = sin(_y);
+    float sinz = sin(_z);
+    
+    float cosx = cos(_x);
+    float cosy = cos(_y);
+    float cosz = cos(_z);
+    
+    r.w = cosx * cosy * cosz + sinx * siny * sinz;
+    r.x = sinx * cosy * cosz + cosx * siny * sinz;
+    r.w = cosx * siny * cosz + sinx * cosy * sinz;
+    r.w = cosx * cosy * sinz + sinx * siny * cosz;
+    
+    return r;
+  }
+  
+  public PVector ToEulerAngle()
+  {
+    float ysqr = y * y;
+    float t0 = 2.0 * (w * x + y * z);
+    float t1 = 1.0 - 2.0 * (x * x + ysqr);
+    float _x = atan2(t0, t1);
+    
+    // pitch (y-axis rotation)
+    float t2 = 2.0 * (w * y - z * x);
+    t2 = ((t2 > 1.0) ? 1.0 : t2);
+    t2 = ((t2 < -1.0) ? -1.0 : t2);
+    float _y = asin(t2);
+    
+    // yaw (z-axis rotation)
+    float t3 = 2.0 * (w * z + x * y);
+    float t4 = 1.0 - 2.0 * (ysqr + z * z);  
+    float _z = atan2(t3, t4);
+    
+    return new PVector(_x, _y, _z);
+  }
+  
+  public static Quaternion Conjugate(Quaternion q)
+  {
+    return new Quaternion(q.w, -1 * q.x, -1 * q.y, -1 * q.z); 
+  }
+  
+  public static float Angle(Quaternion a, Quaternion b)
+  {
+    float r = acos((Quaternion.Multiply(b, Quaternion.Inverse(a)).w)) * 2.0f * 57.2957795f;
+    if (r > 180.0f)
+      return 360.0f - r;
+    return r;
+  }
+  
+  public static float Dot(Quaternion a, Quaternion b)
+  {
+    return a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+  }
+  
+  public static Quaternion Inverse(Quaternion q)
+  {
+    Quaternion r = new Quaternion();
+    float s = q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z;
+    float n = 1f / s;
+    
+    r.x = -q.x * n;
+    r.y = -q.y * n;
+    r.z = -q.z * n;
+    r.w = q.w * n;
+    
+    return r;
+  }
+}

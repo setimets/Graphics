@@ -266,6 +266,7 @@ static class Rasterizer
     return r;
   }
   
+  // It has some problem.
   static ArrayList<Pixel> ScanLine(Vertex v0, Vertex v1, Vertex v2)
   {
     ArrayList<Pixel> ret = new ArrayList<Pixel>();
@@ -458,6 +459,7 @@ static class Rasterizer
   // TODO : https://en.wikipedia.org/wiki/Weiler%E2%80%93Atherton_clipping_algorithm
   // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
   // Sutherland-Hodgman.
+  // It has some problem.
   static PVector[] SHClipping(float x, float y, float w, float h, PVector[] vertices)
   {
     ArrayList r = CreateList(vertices);
