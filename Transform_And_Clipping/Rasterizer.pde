@@ -5,21 +5,7 @@ static class Color
   float b;
   float a;
   
-  public static final Color Red = new Color(1, 0, 0);
-  
-  public static final Color Blue = new Color(0, 1, 0);
-  
-  public static final Color Green = new Color(0, 0, 1);
-  
   public Color() { }
-  
-  public Color(float r, float g, float b)
-  {
-    this.r = r;
-    this.g = g;
-    this.b = b;
-    this.a = 1;
-  }
   
   public Color(float r, float g, float b, float a)
   {
@@ -46,20 +32,14 @@ static class Color
   }
 }
 
-static class Vertex extends Vector3f
+static class Vertex extends Vector2f
 {
-  Vector3f normal;
+  float z;
+  PVector normal;
   Vector2f texCoord;
   Color c;
   
   Vertex(){ }
-  
-  Vertex(Vector3f v)
-  {
-    this.x = v.x;
-    this.y = v.y;
-    this.z = v.z;  
-  }
   
   Vertex(int x, int y, int z, Color c)
   {
@@ -210,17 +190,12 @@ static class Edge
     if(dx > dy)
     {
       float slope = round(dy / dx);
-      
       r = new Pixel(sx + signX * round(dx * t), sy + signY * slope * round(dx * t), Color.Lerp(p0.c, p1.c, t));
-      
-      //println("dx > dy");
     }
     else 
     {
       float slope = round(dx / dy);
-      
       r = new Pixel(sx + signX * slope * round(dy * t), sy + signY * round(dy * t), Color.Lerp(p0.c, p1.c, t));
-      //println("dy > dx");
     }  
     
     return r;
@@ -287,7 +262,6 @@ static class Rasterizer
     return r;
   }
   
-  // It has some problem.
   static ArrayList<Pixel> ScanLine(Vertex v0, Vertex v1, Vertex v2)
   {
     ArrayList<Pixel> ret = new ArrayList<Pixel>();
@@ -452,7 +426,7 @@ static class Rasterizer
   }
     
     
-  private static ArrayList CreateList(Object[] vertices)
+  private static ArrayList CreateList(PVector[] vertices)
   {
     ArrayList r = new ArrayList();
     for(int i=0;i<vertices.length;++i)
@@ -476,38 +450,36 @@ static class Rasterizer
   // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
   // Sutherland-Hodgman.
   // It has some problem.
-  static Vertex[] SHClipping(float x, float y, float w, float h, Vertex[] vertices)
+  static PVector[] SHClipping(float x, float y, float w, float h, PVector[] vertices)
   {
     ArrayList r = CreateList(vertices);
-    Vector3f[] p = new Vector3f[5];
+    PVector[] p = new PVector[5];
     
-    p[0] = new Vector3f(x, y);
-    p[1] = new Vector3f(x, y + h);
-    p[2] = new Vector3f(x + w, y + h);
-    p[3] = new Vector3f(x + w, y);
-    p[4] = new Vector3f(x, y);
+    p[0] = new PVector(x, y);
+    p[1] = new PVector(x, y + h);
+    p[2] = new PVector(x + w, y + h);
+    p[3] = new PVector(x + w, y);
+    p[4] = new PVector(x, y);
     
     for(int i=1;i<p.length;++i)
     {
-      Vector3f xAxis = Vector3f.Sub(p[i], p[i-1]);
-      Vector3f yAxis = Vector3f.Cross(xAxis, new Vector3f(0, 0, 1));
-      
-      xAxis.Normalize();
-      yAxis.Normalize();
+      PVector v = PVector.sub(p[i], p[i-1]);
+      PVector xAxis = v.normalize();
+      PVector yAxis = xAxis.cross(new PVector(0, 0, 1)).normalize();
       
       ArrayList in = CopyList(r);
       r.clear();
       
-      Vertex s = (Vertex)in.get(in.size()-1);
+      PVector s = (PVector)in.get(in.size()-1);
       for(int j=0;j<in.size();++j)
       {
-        Vertex e = (Vertex)in.get(j);
+        PVector e = (PVector)in.get(j);
         
-        Vector3f vs = Vector3f.Sub(s, p[i-1]);
-        Vector3f ve = Vector3f.Sub(e, p[i-1]);
+        PVector vs = PVector.sub(s, p[i-1]);
+        PVector ve = PVector.sub(e, p[i-1]);
         
-        float dsy = Vector3f.Dot(yAxis, vs);
-        float dey = Vector3f.Dot(yAxis, ve);
+        float dsy = yAxis.dot(vs);
+        float dey = yAxis.dot(ve);
         Boolean insideS = dsy > 0;
         Boolean insideE = dey > 0;
         
@@ -515,29 +487,23 @@ static class Rasterizer
         {
           if(!insideS)
           {
-            Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i]);
-            float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
-            
-            r.add(new Vertex(v.x, v.y, 0, Color.Lerp(s.c, e.c, t)));
+            r.add(Line2D.Intersection(s, e, p[i-1], p[i]));
           }
           r.add(e);
         }
         else if(insideS) 
         {
-          Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i]);
-          float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
-          
-          r.add(new Vertex(v.x, v.y, 0, Color.Lerp(s.c, e.c, t)));
+          r.add(Line2D.Intersection(s, e, p[i-1], p[i]));
         }
         
         s = e;
       }
     }
     
-    Vertex[] ret = new Vertex[r.size()];
+    PVector[] ret = new PVector[r.size()];
     for(int k=0;k<ret.length;++k)
     {
-      ret[k] = (Vertex)r.get(k);
+      ret[k] = (PVector)r.get(k);
     }
     return ret;
   }
