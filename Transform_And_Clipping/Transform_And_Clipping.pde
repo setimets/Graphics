@@ -26,13 +26,13 @@ void drawStep()
   float y = 50;
   float z = 50;
   
-  PVector[] box = new PVector[]
+  Vertex[] box = new Vertex[]
   {
-    new PVector(-x, y, z), new PVector(x, y, z),
-    new PVector(x, -y, z), new PVector(-x, -y, z),
+    new Vertex(-x, y, z, Color.Red), new Vertex(x, y, z, Color.Green),
+    new Vertex(x, -y, z, Color.Blue), new Vertex(-x, -y, z, Color.Red),
     
-    new PVector(x, y, -z), new PVector(-x, y, -z),
-    new PVector(-x, -y, -z), new PVector(x, -y, -z),
+    new Vertex(x, y, -z, Color.Red), new Vertex(-x, y, -z, Color.Green),
+    new Vertex(-x, -y, -z, Color.Blue), new Vertex(x, -y, -z, Color.Red),
   };
   
   rad += 0.01f;
@@ -76,7 +76,7 @@ void drawStep()
     0, 0, 0, 1
   });
   */
-  
+  /*
   Vertex[] vb = new Vertex[] 
   { 
     //new Vertex(30f, 90f, 0f, new Color(1f, 0f, 0f, 1f)), 
@@ -90,7 +90,7 @@ void drawStep()
   
   //println(mouseX, mouseY);
   
-  ArrayList<Pixel> fb = Rasterizer.ScanLine(vb[0], vb[1], vb[2]);
+  //ArrayList<Pixel> fb = Rasterizer.ScanLine(vb[0], vb[1], vb[2]);
   //ArrayList<Pixel> fb = Rasterizer.DrawBresenHamLine(vb[0], vb[1]);
   //ArrayList<Pixel> fb = Rasterizer.DrawDDALine(vb[0], vb[1]);
   //ArrayList<Pixel> fb = Rasterizer.Triangle(vb[0], vb[1], vb[2]);
@@ -106,6 +106,7 @@ void drawStep()
     
     set((int)p.x, (int)p.y, cc);
   }
+  */
   
   Matrix4x4 sm = Matrix4x4.Viewport(10, 10, 320, 180);
   Matrix4x4 pm = Matrix4x4.Perspective(width, height, 45f, 1, 1000);
@@ -118,7 +119,7 @@ void drawStep()
   Matrix4x4 wvp = Matrix4x4.Multiply(Matrix4x4.Multiply(pm, vm), wm);
   Matrix4x4 tt = Matrix4x4.Multiply(sm, wvp);
   
-  PVector[] pa = new PVector[box.length];
+  Vertex[] pa = new Vertex[box.length];
   
   for(int i=0;i<box.length;++i)
   {
@@ -135,18 +136,42 @@ void drawStep()
   
   for(int i=0;i<pi.length;i+=4)
   {
-    PVector[] pt = new PVector[]
+    Vertex[] pt = new Vertex[]
     {
       pa[pi[i]], pa[pi[i+1]], pa[pi[i+2]], pa[pi[i+3]]
     };
     
-    PVector[] p = Rasterizer.SHClipping(10, 10, 320, 180, pt);
+    Vertex[] p = Rasterizer.SHClipping(10, 10, 320, 180, pt);
     
+    ArrayList<Pixel> fb = new ArrayList<Pixel>();
+    if(p.length > 3)
+    {
+      ArrayList<Pixel> fb0 = Rasterizer.Triangle(p[1], p[0], p[3]);
+      fb.addAll(fb0);
+    }
+    
+    if(p.length > 3)
+    {
+      ArrayList<Pixel> fb1 = Rasterizer.Triangle(p[3], p[2], p[1]);
+      fb.addAll(fb1);
+    }
+    
+    for(Pixel pp : fb)
+    {
+      int r = (int)(pp.c.r * 255);
+      int g = (int)(pp.c.g * 255);
+      int b = (int)(pp.c.b * 255);
+      color cc = color(r, g, b);
+      
+      set((int)pp.x, (int)pp.y, cc);
+    }
+    /*
     for(int j=1;j<p.length;++j)
     {
-      line(p[j-1].x, p[j-1].y, p[j].x, p[j].y);
+      //line(p[j-1].x, p[j-1].y, p[j].x, p[j].y);
     }
-    line(p[0].x, p[0].y, p[p.length-1].x, p[p.length-1].y);
+    */
+    //line(p[0].x, p[0].y, p[p.length-1].x, p[p.length-1].y);
   }
   
   DrawRect(10, 10, 320, 180);

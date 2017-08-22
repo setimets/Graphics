@@ -124,7 +124,70 @@ static class Vector2f
     r.Scale(Dot(v, r));
     return r;
   }
+}
+
+static class Vector3f extends Vector2f 
+{
+  float z;
   
+  Vector3f()
+  {
+    x = 0;
+    y = 0;
+    z = 0;
+  }
+  
+  Vector3f(float x, float y)
+  {
+    this.x = x;
+    this.y = y;
+    z = 0;
+  }
+  
+  Vector3f(float x, float y, float z)
+  {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+  
+  void Normalize()
+  {
+    float mag = Magnitude();
+    x = x / mag;
+    y = y / mag;
+    z = z / mag;
+  }
+  
+  float Magnitude()
+  {
+    return sqrt(x * x + y * y + z * z);
+  }
+  
+  float SqrMagnitude()
+  {
+    return x * x + y * y + z * z;
+  }
+  
+  static Vector3f Add(Vector3f v0, Vector3f v1)
+  {
+    return new Vector3f(v0.x + v1.x, v0.y + v1.y, v0.z + v1.z);
+  }
+  
+  static Vector3f Sub(Vector3f v0, Vector3f v1)
+  {
+    return new Vector3f(v0.x - v1.x, v0.y - v1.y, v0.z - v1.z);
+  }
+  
+  static float Dot(Vector3f v0, Vector3f v1)
+  {
+    return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z;
+  }
+  
+  static Vector3f Cross(Vector3f v0, Vector3f v1)
+  {
+    return new Vector3f(v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x);
+  }
   
 }
 
@@ -484,6 +547,24 @@ static class Matrix4x4
       r.x /= w;
       r.y /= w;
     }
+    return r;
+  }
+  
+  // TODO : change to vector3
+  Vertex TransformPoint(Vertex p)
+  {
+    Vertex r = new Vertex(); 
+    r.x = E[0] * p.x + E[1] * p.y + E[2] * p.z + E[3] * 1;
+    r.y = E[4] * p.x + E[5] * p.y + E[6] * p.z + E[7] * 1;
+    r.z = E[8] * p.x + E[9] * p.y + E[10] * p.z + E[11] * 1;
+    float w = E[12] * p.x + E[13] * p.y + E[14] * p.z + E[15] * 1;
+    
+    if(w != 1) {
+      r.z /= w;
+      r.x /= w;
+      r.y /= w;
+    }
+    r.c = p.c;
     return r;
   }
   
