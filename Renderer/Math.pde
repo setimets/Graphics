@@ -169,6 +169,17 @@ static class Vector3f extends Vector2f
     return x * x + y * y + z * z;
   }
   
+  static Vector3f Normalize(Vector3f v)
+  {
+    float mag = v.Magnitude();
+    Vector3f r = new Vector3f();
+    r.x = v.x / mag;
+    r.y = v.y / mag;
+    r.z = v.z / mag;
+    
+    return r;
+  }
+  
   static Vector3f Add(Vector3f v0, Vector3f v1)
   {
     return new Vector3f(v0.x + v1.x, v0.y + v1.y, v0.z + v1.z);
@@ -189,10 +200,15 @@ static class Vector3f extends Vector2f
     return new Vector3f(v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x);
   }
   
+  static Vector3f Project(Vector3f v, Vector3f n)
+  {
+    Vector3f r = Normalize(n);
+    r.Scale(Dot(v, r));
+    return r;
+  }
 }
 
 // Row major.
-
 static class Matrix3x3
 {
   float[] E;
@@ -587,7 +603,6 @@ static class Matrix4x4
     return r;
   }
   
-  
   static Matrix4x4 Viewport(float x, float y, float w, float h)
   {
     float[] sm = new float[]
@@ -648,6 +663,45 @@ static class Matrix4x4
     
     return new Matrix4x4(pm);
   }
+  
+  // X-Axis
+  static Matrix4x4 Roll(float rad)
+  {
+    Matrix4x4 rm = new Matrix4x4(new float[]
+    {
+      1, 0, 0, 0,
+      0, cos(rad), -sin(rad), 0,
+      0, sin(rad), cos(rad), 0,
+      0, 0, 0, 1
+    });
+    return rm;
+  }
+  
+  // Y-Axis
+  static Matrix4x4 Pitch(float rad)
+  {
+    Matrix4x4 rm = new Matrix4x4(new float[]
+    {
+      cos(rad), 0, sin(rad), 0,
+      0, 1, 0, 0,
+      -sin(rad), 0, cos(rad), 0,
+      0, 0, 0, 1
+    });
+    return rm;
+  }
+  
+  // Z-Axis
+  static Matrix4x4 Yaw(float rad)
+  {
+    Matrix4x4 rm = new Matrix4x4(new float[]
+    {
+      cos(rad), -sin(rad), 0, 0,
+      sin(rad), cos(rad), 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    });
+    return rm;
+  }
 }
 
 // https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
@@ -689,6 +743,33 @@ static class Quaternion
     Quaternion ret = new Quaternion(t1, t2, t3, t0);
     
     return ret;
+  }
+  
+  public static Vector3f Multiply(Quaternion q, Vector3f v)
+  {
+    float e1 = q.x * 2f;
+    float e2 = q.y * 2f;
+    float e3 = q.z * 2f;
+    
+    float e4 = q.x * e1;
+    float e5 = q.y * e2;
+    float e6 = q.z * e3;
+    
+    float e7 = q.x * e2;
+    float e8 = q.x * e3;
+    float e9 = q.y * e3;
+    
+    float e10 = q.w * e1;
+    float e11 = q.w * e2;
+    float e12 = q.w * e3;
+    
+    Vector3f r = new Vector3f();
+    
+    r.x = (1f - (e5 + e6)) * v.x + (e7 - e12) * v.y + (e8 + e11) * v.z;
+    r.y = (e7 + e12) * v.x + (1 - (e4 + e6)) * v.y + (e9 - e10) * v.z;
+    r.z = (e8 - e11) * v.z + (e9 + e10) * v.y + (1f - (e4 + e5)) * v.z;
+    
+    return r;
   }
   
   public static PVector Multiply(Quaternion q, PVector v)

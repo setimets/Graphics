@@ -45,37 +45,8 @@ void drawStep()
     0, 0, 0, 1
   });
   
-  /*
-  // yaw
-  Matrix4x4 rm = new Matrix4x4(new float[]
-  {
-    cos(r), -sin(r), 0, 0,
-    sin(r), cos(r), 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1
-  });
-  */
+  Matrix4x4 rm = Matrix4x4.Pitch(rad);
   
-  // pitch
-  Matrix4x4 rm = new Matrix4x4(new float[]
-  {
-    cos(rad), 0, sin(rad), 0,
-    0, 1, 0, 0,
-    -sin(rad), 0, cos(rad), 0,
-    0, 0, 0, 1
-  });
-  
-  
-  /*
-  // roll
-  Matrix4x4 rm = new Matrix4x4(new float[]
-  {
-    1, 0, 0, 0,
-    0, cos(r), -sin(r), 0,
-    0, sin(r), cos(r), 0,
-    0, 0, 0, 1
-  });
-  */
   /*
   Vertex[] vb = new Vertex[] 
   { 
@@ -175,7 +146,6 @@ void drawStep()
   }
   
   DrawRect(10, 10, 320, 180);
-  
 }
 
 void DrawRect(float x, float y, float w, float h)
