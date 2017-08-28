@@ -670,8 +670,8 @@ static class Matrix4x4
     Matrix4x4 rm = new Matrix4x4(new float[]
     {
       1, 0, 0, 0,
-      0, cos(rad), -sin(rad), 0,
-      0, sin(rad), cos(rad), 0,
+      0, cos(rad), -sin(rad),
+      0, sin(rad), cos(rad),
       0, 0, 0, 1
     });
     return rm;

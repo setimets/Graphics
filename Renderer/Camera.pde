@@ -1,4 +1,0 @@
-static class Camera
-{
-  
-}

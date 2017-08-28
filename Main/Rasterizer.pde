@@ -29,6 +29,16 @@ static class Color
     this.a = a;
   }
   
+  public int ToInt()
+  {
+    int aa = ((int)(a*255)) << 24;
+    int rr = ((int)(r*255)) << 16;
+    int gg = ((int)(g*255)) << 8;
+    int bb = ((int)(b*255));
+    
+    return aa + rr + gg + bb;
+  }
+  
   static Color Multify(Color c, float v)
   {
     Color r = new Color(c.r * v, c.g * v, c.b * v, c.a * v);
@@ -540,6 +550,23 @@ static class Rasterizer
       ret[k] = (Vertex)r.get(k);
     }
     return ret;
+  }
+  
+  
+  public static void DrawRect(PGraphics g, float x, float y, float w, float h)
+  {
+    g.line(x, y, x+w, y);
+    g.line(x+w, y, x+w, y+h);
+    g.line(x+w, y+h, x, y+h);
+    g.line(x, y+h, x, y);
+  }
+  
+  public static void DrawRect(PGraphics g, PVector p0, PVector p1, PVector p2, PVector p3)
+  {
+    g.line(p0.x, p0.y, p1.x, p1.y);
+    g.line(p1.x, p1.y, p2.x, p2.y);
+    g.line(p3.x, p3.y, p2.x, p2.y);
+    g.line(p3.x, p3.y, p0.x, p0.y);
   }
 
 }
