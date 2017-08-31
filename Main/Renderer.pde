@@ -57,26 +57,43 @@ static public class TestRenderer
     {
       pa[i] = tt.TransformPoint(box[i]);
     }
-    
+
     int[] pi = new int[]
     {
-      0, 1, 2, 3,
-      1, 4, 7, 2,
-      4, 5, 6, 7,
-      5, 0, 3, 6,
+      0,1,2,
+      2,3,0,
+      5,0,3,
+      3,6,5,
+      4,5,6,
+      4,6,7,
+      1,2,4,
+      4,2,7,
     };
     
-    for(int i=0;i<pi.length;i+=4)
+    //for(int i=0;i<pi.length;i+=4)
+    for(int i=0;i<pi.length;i+=3)
     {
       Vertex[] pt = new Vertex[]
       {
-        pa[pi[i]], pa[pi[i+1]], pa[pi[i+2]], pa[pi[i+3]]
+        //pa[pi[i]], pa[pi[i+1]], pa[pi[i+2]], pa[pi[i+3]]
+        pa[pi[i]], pa[pi[i+1]], pa[pi[i+2]]
       };
       
       Vertex[] p = Rasterizer.SHClipping(10, 10, 320, 180, pt);
       
       ArrayList<Pixel> fb = new ArrayList<Pixel>();
-      if(p.length > 3)
+      ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p);
+      fb.addAll(fb0);
+        
+      /*
+      ArrayList<Pixel> fb = new ArrayList<Pixel>();
+      if(p.length > 2)
+      {
+        ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p[1], p[0], p[2]);
+        fb.addAll(fb0);
+      }
+      */
+      /*if(p.length > 3)
       {
         ArrayList<Pixel> fb0 = Rasterizer.Triangle(p[1], p[0], p[3]);
         fb.addAll(fb0);
@@ -86,7 +103,7 @@ static public class TestRenderer
       {
         ArrayList<Pixel> fb1 = Rasterizer.Triangle(p[3], p[2], p[1]);
         fb.addAll(fb1);
-      }
+      }*/
       
       for(Pixel pp : fb)
       {
@@ -98,7 +115,7 @@ static public class TestRenderer
   }
 }
 
-public class LineRenderer
+public class TestLineRenderer
 {
   public void Render(PGraphics pg)
   {

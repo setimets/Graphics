@@ -171,8 +171,8 @@ static class AET
       for(Edge e : edges)
       {
         float Y = min.y + i;
-        Vector2f s0 = new Vector2f(min.x, Y);
-        Vector2f s1 = new Vector2f(max.x, Y);
+        Vector2f s0 = new Vector2f(floor(min.x), Y);
+        Vector2f s1 = new Vector2f(ceil(max.x), Y);
         
         Vector2f p = Line2D.Intersection(s0, s1, e.p0, e.p1);
         
@@ -335,6 +335,43 @@ static class Rasterizer
     return r;
   }
   
+  static ArrayList<Pixel> ScanLine(Vertex[] polygon)
+  {
+    ArrayList<Pixel> ret = new ArrayList<Pixel>();
+    
+    Edge[] edges = new Edge[polygon.length];
+    for(int i=1;i< polygon.length;i++)
+    {
+      edges[i-1] = new Edge(polygon[i-1], polygon[i]);
+    }
+    edges[edges.length-1] = new Edge(polygon[polygon.length-1], polygon[0]);
+    
+    AET aet = new AET(edges);
+    
+    aet.Create();
+    
+    for(ScanLine line : aet.lines) //<>//
+    {
+      int size = line.intersectX.size();
+      for(int i=0; i < size && size % 2 == 0; i+=2)
+      {
+        Edge e = new Edge(line.intersectX.get(i), line.intersectX.get(i+1));
+        int len = e.Length();
+        
+        for(int j=0;j<len;++j)
+        {
+          float t = j/(float)len;
+          Pixel p = e.Interpolate(t);
+          ret.add(p);
+        }
+      }
+    }
+    
+    return ret;
+  }
+  
+  
+  
   static ArrayList<Pixel> DDALine(Vertex v0, Vertex v1)
   {
     ArrayList<Pixel> r = new ArrayList<Pixel>();
@@ -457,11 +494,9 @@ static class Rasterizer
         iy++;
       }
     }
-    
     return r;
   }
-    
-    
+  
   private static ArrayList CreateList(Object[] vertices)
   {
     ArrayList r = new ArrayList();
