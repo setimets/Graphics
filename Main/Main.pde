@@ -2,13 +2,14 @@
 PGraphics pg;
 int frame;
 
-TestRenderer renderer;
+IRenderer renderer;
 
 void setup() 
 {
   size(640, 360);
   
-  pg = createGraphics(640, 360); //<>//
+  pg = createGraphics(640, 360);
+  //renderer = new TestClippingRenderer();
   renderer = new TestRenderer();
 }
 
@@ -25,7 +26,7 @@ void Render(int targetFrame)
     pg.background(0);
     pg.stroke(255);
     pg.noFill();
-    renderer.Render(pg); //<>//
+    renderer.Render(pg);
     pg.endDraw();
     image(pg, 0, 0); 
     
@@ -37,5 +38,5 @@ void Render(int targetFrame)
 
 void keyPressed()
 {
-  //Render(9);
+  //Render(1);
 }

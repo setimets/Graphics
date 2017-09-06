@@ -1,18 +1,16 @@
 
 
-static public class Renderer3D
+interface IRenderer
 {
-  void Render(PGraphics pg)
-  {
-    
-  }
+  void Render(PGraphics pg);
 }
 
-static public class TestRenderer
+
+static public class TestRenderer implements IRenderer
 {
   float rad;
   
-  void Render(PGraphics pg)
+  void Render(PGraphics pg) 
   {
     float x = 50;
     float y = 50;
@@ -58,52 +56,48 @@ static public class TestRenderer
       pa[i] = tt.TransformPoint(box[i]);
     }
 
+    //    5-----4
+    // 0--|--1  |
+    // |  6--|--7
+    // 3-----2
+    
     int[] pi = new int[]
     {
       0,1,2,
       2,3,0,
+      1,4,7,
+      7,2,1,
+      4,5,6,
+      6,7,4,
       5,0,3,
       3,6,5,
-      4,5,6,
-      4,6,7,
-      1,2,4,
-      4,2,7,
     };
     
-    //for(int i=0;i<pi.length;i+=4)
     for(int i=0;i<pi.length;i+=3)
     {
       Vertex[] pt = new Vertex[]
       {
-        //pa[pi[i]], pa[pi[i+1]], pa[pi[i+2]], pa[pi[i+3]]
         pa[pi[i]], pa[pi[i+1]], pa[pi[i+2]]
       };
+      
+      // Backface culling.
+      // https://en.wikipedia.org/wiki/Back-face_culling
+      Matrix3x3 mat = new Matrix3x3(new float[]
+      {
+        pt[1].x - pt[0].x, pt[2].x - pt[0].x, pt[0].x,
+        pt[1].y - pt[0].y, pt[2].y - pt[0].y, pt[0].y,
+        0, 0, 1
+      });
+      
+      // The sign is opposite. !?!?
+      if(mat.Determinant() > 0)
+        continue;
       
       Vertex[] p = Rasterizer.SHClipping(10, 10, 320, 180, pt);
       
       ArrayList<Pixel> fb = new ArrayList<Pixel>();
       ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p);
       fb.addAll(fb0);
-        
-      /*
-      ArrayList<Pixel> fb = new ArrayList<Pixel>();
-      if(p.length > 2)
-      {
-        ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p[1], p[0], p[2]);
-        fb.addAll(fb0);
-      }
-      */
-      /*if(p.length > 3)
-      {
-        ArrayList<Pixel> fb0 = Rasterizer.Triangle(p[1], p[0], p[3]);
-        fb.addAll(fb0);
-      }
-      
-      if(p.length > 3)
-      {
-        ArrayList<Pixel> fb1 = Rasterizer.Triangle(p[3], p[2], p[1]);
-        fb.addAll(fb1);
-      }*/
       
       for(Pixel pp : fb)
       {
@@ -115,7 +109,7 @@ static public class TestRenderer
   }
 }
 
-public class TestLineRenderer
+public class TestLineRenderer implements IRenderer
 {
   public void Render(PGraphics pg)
   {
@@ -138,11 +132,38 @@ public class TestLineRenderer
     for(int i=0;i<fb.size();++i)
     {
       Pixel p = fb.get(i);
-      int r = (int)(p.c.r * 255);
-      int g = (int)(p.c.g * 255);
-      int b = (int)(p.c.b * 255);
-      
-      set((int)p.x, (int)p.y, p.c.ToInt());
+      pg.set((int)p.x, (int)p.y, p.c.ToInt());
     }
+  }
+}
+
+public class TestClippingRenderer implements IRenderer
+{
+  public void Render(PGraphics pg)
+  {
+    Vertex[] va = new Vertex[] 
+    { 
+      //new Vertex(30f, 90f, 0f, new Color(1f, 0f, 0f, 1f)), 
+      //new Vertex(60f, 60f, 0f, new Color(0f, 1f, 0f, 1f)),
+      //new Vertex(90f, 90f, 0f, new Color(0f, 0f, 1f, 1f)),
+      new Vertex(100f, 100f, 0f, new Color(1f, 0f, 0f, 1f)),
+      new Vertex(360, 7, 0f, new Color(0f, 1f, 0f, 1f)),
+      //new Vertex(mouseX, mouseY, 0f, new Color(0f,   1f, 0f, 1f)),
+      new Vertex(8f, 40.3f, 0f, new Color(0f, 0f, 1f, 1f)) 
+    };
+    Vertex[] vb = Rasterizer.SHClipping(10, 10, 320, 180, va);
+    
+    ArrayList<Pixel> fb = Rasterizer.ScanLine(vb);
+    
+    for(int i=0;i<fb.size();++i)
+    {
+      Pixel p = fb.get(i);
+      pg.set((int)p.x, (int)p.y, p.c.ToInt());
+    }
+    
+    pg.line(va[0].x, va[0].y, va[1].x, va[1].y);
+    pg.line(va[1].x, va[1].y, va[2].x, va[2].y);
+    pg.line(va[2].x, va[2].y, va[0].x, va[0].y);
+    Rasterizer.DrawRect(pg, 10, 10, 320, 180);
   }
 }

@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 static class Color
 {
   float r;
@@ -350,7 +352,7 @@ static class Rasterizer
     
     aet.Create();
     
-    for(ScanLine line : aet.lines) //<>//
+    for(ScanLine line : aet.lines)
     {
       int size = line.intersectX.size();
       for(int i=0; i < size && size % 2 == 0; i+=2)
@@ -369,8 +371,6 @@ static class Rasterizer
     
     return ret;
   }
-  
-  
   
   static ArrayList<Pixel> DDALine(Vertex v0, Vertex v1)
   {
@@ -497,33 +497,16 @@ static class Rasterizer
     return r;
   }
   
-  private static ArrayList CreateList(Object[] vertices)
-  {
-    ArrayList r = new ArrayList();
-    for(int i=0;i<vertices.length;++i)
-    {
-      r.add(vertices[i]);
-    }
-    return r;
-  }
-  
-  private static ArrayList CopyList(ArrayList t)
-  {
-    ArrayList r = new ArrayList();
-    for(int i=0;i<t.size();++i)
-    {
-      r.add(t.get(i));
-    }
-    return r;
-  }
-  
   // TODO : https://en.wikipedia.org/wiki/Weiler%E2%80%93Atherton_clipping_algorithm
   // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
   // Sutherland-Hodgman.
   // It has some problem.
   static Vertex[] SHClipping(float x, float y, float w, float h, Vertex[] vertices)
   {
-    ArrayList r = CreateList(vertices);
+    ArrayList<Vertex> r = new ArrayList<Vertex>();
+    
+    r.addAll(Arrays.asList(vertices));
+    
     Vector3f[] p = new Vector3f[5];
     
     p[0] = new Vector3f(x, y);
@@ -532,35 +515,38 @@ static class Rasterizer
     p[3] = new Vector3f(x + w, y);
     p[4] = new Vector3f(x, y);
     
+    
+    // +---x 
+    // |      From x-axis to y-axis is clock wise. So these cross-product direction is like a screw pike direction.
+    // y
     for(int i=1;i<p.length;++i)
     {
-      Vector3f xAxis = Vector3f.Sub(p[i], p[i-1]);
-      Vector3f yAxis = Vector3f.Cross(xAxis, new Vector3f(0, 0, 1));
+      Vector3f edge = Vector3f.Sub(p[i], p[i-1]);
+      edge.Normalize();
+      Vector3f right = Vector3f.Cross(edge, Vector3f.Backward);
       
-      xAxis.Normalize();
-      yAxis.Normalize();
-      
-      ArrayList in = CopyList(r);
+      ArrayList<Vertex> in = new ArrayList<Vertex>(r);
       r.clear();
       
-      Vertex s = (Vertex)in.get(in.size()-1);
+      Vertex s = in.get(in.size()-1);
       for(int j=0;j<in.size();++j)
       {
-        Vertex e = (Vertex)in.get(j);
+        Vertex e = in.get(j);
         
-        Vector3f vs = Vector3f.Sub(s, p[i-1]);
-        Vector3f ve = Vector3f.Sub(e, p[i-1]);
+        Vector3f vs = Vector3f.Sub(p[i-1], s);
+        Vector3f ve = Vector3f.Sub(p[i-1], e);
         
-        float dsy = Vector3f.Dot(yAxis, vs);
-        float dey = Vector3f.Dot(yAxis, ve);
-        Boolean insideS = dsy > 0;
-        Boolean insideE = dey > 0;
+        float dsy = Vector3f.Dot(vs, right);
+        float dey = Vector3f.Dot(ve, right);
+        
+        Boolean insideS = dsy >= 0;
+        Boolean insideE = dey >= 0;
         
         if(insideE)
         {
           if(!insideS)
           {
-            Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i]);
+            Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i], false);
             float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
             
             r.add(new Vertex(v.x, v.y, 0, Color.Lerp(s.c, e.c, t)));
@@ -569,7 +555,7 @@ static class Rasterizer
         }
         else if(insideS) 
         {
-          Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i]);
+          Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i], false);
           float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
           
           r.add(new Vertex(v.x, v.y, 0, Color.Lerp(s.c, e.c, t)));
@@ -580,13 +566,9 @@ static class Rasterizer
     }
     
     Vertex[] ret = new Vertex[r.size()];
-    for(int k=0;k<ret.length;++k)
-    {
-      ret[k] = (Vertex)r.get(k);
-    }
+    r.toArray(ret);
     return ret;
   }
-  
   
   public static void DrawRect(PGraphics g, float x, float y, float w, float h)
   {

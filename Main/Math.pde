@@ -128,6 +128,20 @@ static class Vector2f
 
 static class Vector3f extends Vector2f 
 {
+  public static final Vector3f Zero = new Vector3f(0, 0, 0);
+  
+  public static final Vector3f Right = new Vector3f(1, 0, 0);
+  
+  public static final Vector3f Left = new Vector3f(-1, 0, 0);
+  
+  public static final Vector3f Top = new Vector3f(0, 1, 0);
+  
+  public static final Vector3f Bottom = new Vector3f(0, -1, 0);
+  
+  public static final Vector3f Forward = new Vector3f(0, 0, 1);
+  
+  public static final Vector3f Backward = new Vector3f(0, 0, -1);
+  
   float z;
   
   Vector3f()

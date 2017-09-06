@@ -22,9 +22,15 @@ static class Line2D
   
   static Vector2f Intersection(Vector2f p1, Vector2f p2, Vector2f p3, Vector2f p4)
   {
+    return Intersection(p1, p2, p3, p4, true);
+  }
+  
+  static Vector2f Intersection(Vector2f p1, Vector2f p2, Vector2f p3, Vector2f p4, Boolean checkLen)
+  {
     Vector2f r = new Vector2f();
     
-    if((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x) == 0)
+    float det = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+    if(det == 0)
     {
       float x1 = min(min(p1.x, p2.x), min(p3.x, p4.x));
       float x2 = max(min(p1.x, p2.x), min(p3.x, p4.x));
@@ -48,11 +54,10 @@ static class Line2D
       return r;
     }
     
-    float den = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
-    float ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / den;
-    float ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / den;
+    float ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / det;
+    float ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / det;
     
-    if(!((ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1)))
+    if(checkLen && !((ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1)))
     {
       r.x = Float.NaN;
       r.y = Float.NaN;
