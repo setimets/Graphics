@@ -271,6 +271,17 @@ static class Edge
 
 static class Rasterizer 
 {
+  static ArrayList<Pixel> TriangleFan(Vertex[] vertices)
+  {
+    ArrayList<Pixel> r = new ArrayList<Pixel>();
+    
+    for(int i=2;i<vertices.length;i++)
+    {
+      r.addAll(Triangle(vertices[0], vertices[i-1], vertices[i]));
+    }
+    return r;
+  }
+  
   static ArrayList<Pixel> Triangle(Vertex v0, Vertex v1, Vertex v2)
   {
     ArrayList<Pixel> r = new ArrayList<Pixel>();

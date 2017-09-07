@@ -63,14 +63,14 @@ static public class TestRenderer implements IRenderer
     
     int[] pi = new int[]
     {
-      0,1,2,
-      2,3,0,
-      1,4,7,
-      7,2,1,
-      4,5,6,
-      6,7,4,
-      5,0,3,
-      3,6,5,
+      0,3,2,
+      2,1,0,
+      1,2,7,
+      7,4,1,
+      4,7,6,
+      6,5,4,
+      5,6,3,
+      3,0,5,      
     };
     
     for(int i=0;i<pi.length;i+=3)
@@ -89,14 +89,13 @@ static public class TestRenderer implements IRenderer
         0, 0, 1
       });
       
-      // The sign is opposite. !?!?
-      if(mat.Determinant() > 0)
+      if(mat.Determinant() < 0)
         continue;
       
       Vertex[] p = Rasterizer.SHClipping(10, 10, 320, 180, pt);
       
       ArrayList<Pixel> fb = new ArrayList<Pixel>();
-      ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p);
+      ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p);
       fb.addAll(fb0);
       
       for(Pixel pp : fb)
