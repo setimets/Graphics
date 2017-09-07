@@ -9,6 +9,12 @@ interface IRenderer
 static public class TestRenderer implements IRenderer
 {
   float rad;
+  PImage texture;
+  
+  TestRenderer(PImage texture)
+  {
+    this.texture = texture;
+  }
   
   void Render(PGraphics pg) 
   {
@@ -16,6 +22,7 @@ static public class TestRenderer implements IRenderer
     float y = 50;
     float z = 50;
     
+    /*
     Vertex[] box = new Vertex[]
     {
       new Vertex(-x, y, z, Color.Red), new Vertex(x, y, z, Color.Green),
@@ -24,6 +31,17 @@ static public class TestRenderer implements IRenderer
       new Vertex(x, y, -z, Color.Red), new Vertex(-x, y, -z, Color.Green),
       new Vertex(-x, -y, -z, Color.Blue), new Vertex(x, -y, -z, Color.Red),
     };
+    */
+    
+    Vertex[] box = new Vertex[]
+    {
+      new Vertex(-x, y, z, new Vector2f(0, 0.5f)), new Vertex(x, y, z, new Vector2f(0.5f, 0.5f)),
+      new Vertex(x, -y, z, new Vector2f(0.5f, 0)), new Vertex(-x, -y, z, new Vector2f(0, 0)),
+      
+      new Vertex(x, y, -z, new Vector2f(0, 1)), new Vertex(-x, y, -z, new Vector2f(1, 1)),
+      new Vertex(-x, -y, -z, new Vector2f(1, 0)), new Vertex(x, -y, -z, new Vector2f(0, 0)),
+    };
+    
     
     rad += 0.01f;
     
@@ -53,7 +71,8 @@ static public class TestRenderer implements IRenderer
     
     for(int i=0;i<box.length;++i)
     {
-      pa[i] = tt.TransformPoint(box[i]);
+       Vector3f v = tt.TransformPoint(box[i]);
+       pa[i] = new Vertex(v, box[i].uv, box[i].c);
     }
 
     //    5-----4
@@ -95,7 +114,8 @@ static public class TestRenderer implements IRenderer
       Vertex[] p = Rasterizer.SHClipping(10, 10, 320, 180, pt);
       
       ArrayList<Pixel> fb = new ArrayList<Pixel>();
-      ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p);
+       ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(texture, p);
+      //ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p);
       fb.addAll(fb0);
       
       for(Pixel pp : fb)

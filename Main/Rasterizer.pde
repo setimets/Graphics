@@ -7,6 +7,10 @@ static class Color
   float b;
   float a;
   
+  public static final Color White = new Color(1, 1, 1);
+  
+  public static final Color Black = new Color(0, 0, 0);
+  
   public static final Color Red = new Color(1, 0, 0);
   
   public static final Color Blue = new Color(0, 1, 0);
@@ -14,6 +18,14 @@ static class Color
   public static final Color Green = new Color(0, 0, 1);
   
   public Color() { }
+  
+  public Color(int c)
+  {
+    this.a = ((c & 0xFF000000) >> 24) / 255f;
+    this.r = ((c & 0x00FF0000) >> 16) / 255f;
+    this.g = ((c & 0x0000FF00) >> 8) / 255f;
+    this.b = ((c & 0x000000FF)) / 255f;
+  }
   
   public Color(float r, float g, float b)
   {
@@ -47,6 +59,11 @@ static class Color
     return r;
   }
   
+  static Color Add(Color a, Color b)
+  {
+    return new Color(a.r + b.r, a.g + b.g , a.b + b.b, a.a + b.a);
+  }
+  
   static Color Lerp(Color a, Color b, float t)
   {
     Color c = new Color();
@@ -61,8 +78,8 @@ static class Color
 static class Vertex extends Vector3f
 {
   Vector3f normal;
-  Vector2f texCoord;
-  Color c;
+  Vector2f uv = Vector2f.Zero;
+  Color c = Color.Black;
   
   Vertex(){ }
   
@@ -87,6 +104,33 @@ static class Vertex extends Vector3f
     this.y = y;
     this.z = z;
     this.c = c;
+  }
+  
+  Vertex(float x, float y, float z, Vector2f uv)
+  {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.uv = uv;
+  }
+  
+  Vertex(float x, float y, float z, Vector2f uv, Color c)
+  {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.c = c;
+    this.uv = uv;
+  }
+  
+  
+  Vertex(Vector3f v, Vector2f uv, Color c)
+  {
+    this.x = v.x;
+    this.y = v.y;
+    this.z = v.z;
+    this.c = c;
+    this.uv = uv;
   }
 }
 
@@ -282,6 +326,60 @@ static class Rasterizer
     return r;
   }
   
+  static ArrayList<Pixel> TriangleFan(PImage tex, Vertex[] vertices)
+  {
+    ArrayList<Pixel> r = new ArrayList<Pixel>();
+    
+    for(int i=2;i<vertices.length;i++)
+    {
+      r.addAll(Triangle(tex, vertices[0], vertices[i-1], vertices[i]));
+    }
+    return r;
+  }
+  
+  static ArrayList<Pixel> Triangle(PImage tex, Vertex v0, Vertex v1, Vertex v2)
+  {
+    ArrayList<Pixel> r = new ArrayList<Pixel>();
+    
+    Triangle triangle = new Triangle(v0, v1, v2);
+    
+    PVector min = triangle.bounds.Min();
+    PVector max = triangle.bounds.Max();
+    
+    for(int i=(int)min.y;i<max.y;++i)
+    {
+      for(int j=(int)min.x;j<max.x;++j)
+      {
+        PVector p = triangle.BarycentricCoords(new Vector2f(j, i));
+        
+        if(p.x >= 0 && p.y >= 0 && p.z >= 0)
+        {
+          Vector2f uv0 = Vector2f.Scale(v0.uv, p.x);
+          Vector2f uv1 = Vector2f.Scale(v1.uv, p.y);
+          Vector2f uv2 = Vector2f.Scale(v2.uv, p.z);
+          
+          Vector2f uv = new Vector2f(uv0.x+uv1.x+uv2.x, uv0.y+uv1.y+uv2.y);
+          
+          uv.x *= tex.width;
+          uv.y *= tex.height;
+          
+          Color cc = new Color(tex.get((int)uv.x, (int)uv.y));
+          
+          Color a = Color.Multify(v0.c, p.x);
+          Color b = Color.Multify(v1.c, p.y);
+          Color c = Color.Multify(v2.c, p.z);
+          
+          cc = Color.Add(cc, a);
+          cc = Color.Add(cc, b);
+          cc = Color.Add(cc, c);
+          
+          r.add(new Pixel(j, i, cc));
+        }
+      }
+    }
+    return r;
+  }
+  
   static ArrayList<Pixel> Triangle(Vertex v0, Vertex v1, Vertex v2)
   {
     ArrayList<Pixel> r = new ArrayList<Pixel>();
@@ -303,7 +401,10 @@ static class Rasterizer
           Color b = Color.Multify(v1.c, p.y);
           Color c = Color.Multify(v2.c, p.z);
           
-          r.add(new Pixel(j, i, new Color(a.r + b.r + c.r, a.g + b.g + c.g, a.b + b.b + c.b, a.a + b.a + c.a)));
+          Color cc = Color.Add(a, b);
+          cc = Color.Add(cc, c);
+          
+          r.add(new Pixel(j, i, cc));
         }
       }
     }
@@ -559,8 +660,8 @@ static class Rasterizer
           {
             Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i], false);
             float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
-            
-            r.add(new Vertex(v.x, v.y, 0, Color.Lerp(s.c, e.c, t)));
+            Vertex n = new Vertex(v.x, v.y, 0, Vector2f.Lerp(s.uv, e.uv, t), Color.Lerp(s.c, e.c, t));
+            r.add(n);
           }
           r.add(e);
         }
@@ -568,8 +669,8 @@ static class Rasterizer
         {
           Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i], false);
           float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
-          
-          r.add(new Vertex(v.x, v.y, 0, Color.Lerp(s.c, e.c, t)));
+          Vertex n = new Vertex(v.x, v.y, 0, Vector2f.Lerp(s.uv, e.uv, t), Color.Lerp(s.c, e.c, t));
+          r.add(n);
         }
         
         s = e;

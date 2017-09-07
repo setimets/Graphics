@@ -1,5 +1,7 @@
 static class Vector2f
 {
+  public static final Vector2f Zero = new Vector2f(0, 0);
+  
   float x;
   float y;
   
@@ -123,6 +125,16 @@ static class Vector2f
     Vector2f r = Normalize(n);
     r.Scale(Dot(v, r));
     return r;
+  }
+  
+  static Vector2f Lerp(Vector2f s, Vector2f e, float t)
+  {
+    return new Vector2f(lerp(s.x, e.x, t), lerp(s.y, e.y, t));
+  }
+  
+  static Vector2f Scale(Vector2f v, float s)
+  {
+    return new Vector2f(v.x * s, v.y * s);
   }
 }
 
@@ -581,9 +593,9 @@ static class Matrix4x4
   }
   
   // TODO : change to vector3
-  Vertex TransformPoint(Vertex p)
+  Vector3f TransformPoint(Vector3f p)
   {
-    Vertex r = new Vertex(); 
+    Vector3f r = new Vector3f(); 
     r.x = E[0] * p.x + E[1] * p.y + E[2] * p.z + E[3] * 1;
     r.y = E[4] * p.x + E[5] * p.y + E[6] * p.z + E[7] * 1;
     r.z = E[8] * p.x + E[9] * p.y + E[10] * p.z + E[11] * 1;
@@ -594,7 +606,6 @@ static class Matrix4x4
       r.x /= w;
       r.y /= w;
     }
-    r.c = p.c;
     return r;
   }
   

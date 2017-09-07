@@ -3,14 +3,17 @@ PGraphics pg;
 int frame;
 
 IRenderer renderer;
+PImage image;
 
 void setup() 
 {
   size(640, 360);
   
+  image = loadImage("drj.jpg");
   pg = createGraphics(640, 360);
   //renderer = new TestClippingRenderer();
-  renderer = new TestRenderer();
+  
+  renderer = new TestRenderer(image);
 }
 
 void draw() 
