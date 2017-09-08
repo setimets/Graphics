@@ -33,6 +33,7 @@ static public class TestRenderer implements IRenderer
     };
     */
     
+    
     Vertex[] box = new Vertex[]
     {
       new Vertex(-x, y, z, new Vector2f(0, 1f)), new Vertex(x, y, z, new Vector2f(1f, 1f)),
@@ -111,11 +112,12 @@ static public class TestRenderer implements IRenderer
       if(mat.Determinant() < 0)
         continue;
       
-      Vertex[] p = Rasterizer.SHClipping(10, 10, 320, 180, pt);
+      Vertex[] p = Clipping.SutherlandHodgman(10, 10, 320, 180, pt);
       
       ArrayList<Pixel> fb = new ArrayList<Pixel>();
-       ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(texture, p);
-      //ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p);
+      //ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture);  
+      ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p, texture);
+      
       fb.addAll(fb0);
       
       for(Pixel pp : fb)
@@ -162,15 +164,12 @@ public class TestClippingRenderer implements IRenderer
   {
     Vertex[] va = new Vertex[] 
     { 
-      //new Vertex(30f, 90f, 0f, new Color(1f, 0f, 0f, 1f)), 
-      //new Vertex(60f, 60f, 0f, new Color(0f, 1f, 0f, 1f)),
-      //new Vertex(90f, 90f, 0f, new Color(0f, 0f, 1f, 1f)),
-      new Vertex(100f, 100f, 0f, new Color(1f, 0f, 0f, 1f)),
-      new Vertex(360, 7, 0f, new Color(0f, 1f, 0f, 1f)),
-      //new Vertex(mouseX, mouseY, 0f, new Color(0f,   1f, 0f, 1f)),
-      new Vertex(8f, 40.3f, 0f, new Color(0f, 0f, 1f, 1f)) 
+      new Vertex(100f, 100f, 0f, Color.Red),
+      //new Vertex(365, 5, 0f, Color.Green),
+      new Vertex(mouseX, mouseY, 0f, Color.Green),
+      new Vertex(11f, 40.3f, 0f, Color.Blue) 
     };
-    Vertex[] vb = Rasterizer.SHClipping(10, 10, 320, 180, va);
+    Vertex[] vb = Clipping.SutherlandHodgman(10, 10, 320, 180, va);
     
     ArrayList<Pixel> fb = Rasterizer.ScanLine(vb);
     

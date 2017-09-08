@@ -11,20 +11,18 @@ void setup()
   
   image = loadImage("drj.jpg");
   pg = createGraphics(640, 360);
-  //renderer = new TestClippingRenderer();
   
+  //renderer = new TestClippingRenderer();
   renderer = new TestRenderer(image);
 }
 
 void draw() 
 {
-  Render(1);
+  Render();
 }
 
-void Render(int targetFrame)
+void Render()
 {
-  for(int i=0;i<targetFrame;++i)
-  {
     pg.beginDraw();
     pg.background(0);
     pg.stroke(255);
@@ -33,13 +31,14 @@ void Render(int targetFrame)
     pg.endDraw();
     image(pg, 0, 0); 
     
-    textSize(32);
+    textAlign(RIGHT);
+    textSize(10);
     fill(255, 255, 255);
-    text(frame++, width - 100, height - 100);
-  }
+    text("("+mouseX+", "+ mouseY + ")", width - 10, height-22);
+    text(frame++ + " frame " + (int)frameRate +" fps", width - 10, height-10);
 }
 
 void keyPressed()
 {
-  //Render(1);
+  //Render();
 }

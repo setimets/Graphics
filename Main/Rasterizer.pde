@@ -161,7 +161,7 @@ static class Pixel
     
 static class ScanLine
 {
-  ArrayList<Pixel> intersectX = new ArrayList<Pixel>();
+  ArrayList<Vertex> intersectX = new ArrayList<Vertex>();
 }
 
 static class AET
@@ -200,27 +200,37 @@ static class AET
     Vector2f min = bounds.Min();
     Vector2f max = bounds.Max();
     
-    int len = ceil(abs(max.y - min.y));
+    int minY = floor(min.y);
+    int len = abs(ceil(max.y) - minY);
     
+    if(len == 0)
+      throw new Error("Len is 0");
+      
     lines = new ScanLine[len];
+    
+    Vector2f s0 = new Vector2f(floor(min.x), minY);
+    Vector2f s1 = new Vector2f(ceil(max.x), minY);
     
     for(int i=0;i<len;++i)
     {
       ScanLine line = lines[i] = new ScanLine();
       for(Edge e : edges)
       {
-        float Y = min.y + i;
-        Vector2f s0 = new Vector2f(floor(min.x), Y);
-        Vector2f s1 = new Vector2f(ceil(max.x), Y);
+        Vector2f p = Line2D.Intersection(e.p0, e.p1, s0, s1);
+        s0.y = s1.y = minY + i;
         
-        Vector2f p = Line2D.Intersection(s0, s1, e.p0, e.p1);
+        if(p.x == Float.POSITIVE_INFINITY || p.y == Float.POSITIVE_INFINITY)
+          continue;
         
         if(!(Float.isNaN(p.x) || Float.isNaN(p.y)))
         {
           float t = Vector2f.Distance(e.p0, p) / Vector2f.Distance(e.p1, e.p0);
-          Color c = Color.Lerp(e.p0.c, e.p1.c, t);          
-          line.intersectX.add(new Pixel(p.x, p.y, c));
+          Color c = Color.Lerp(e.p0.c, e.p1.c, t);
+          Vector2f uv = Vector2f.Lerp(e.p0.uv, e.p1.uv, t);
+          line.intersectX.add(new Vertex(p.x, minY + i, 0, uv, c));
         }
+        //else
+        //  println(s0.y);
       }
     }
   }
@@ -233,11 +243,6 @@ static class Edge
   
   Edge next;
   
-  Edge(Pixel p0, Pixel p1)
-  {
-    this(new Vertex(p0.x, p0.y, 0, p0.c), new Vertex(p1.x, p1.y, 0, p1.c));
-  }
-  
   Edge(Vertex p0, Vertex p1)
   {
     this.p0 = p0;
@@ -246,9 +251,9 @@ static class Edge
     points = new Vertex[] { p0, p1 };
   }
   
-  Pixel Interpolate(float t)
+  Vector2f Interpolate(float t)
   {
-    Pixel r = null;
+    Vector2f r = null;
     float dy = abs(p1.y - p0.y);
     float dx = abs(p1.x - p0.x);
     float sx = p0.x;
@@ -259,12 +264,14 @@ static class Edge
     if(dx > dy)
     {
       float slope = round(dy / dx);
-      r = new Pixel(sx + signX * round(dx * t), sy + signY * slope * round(dx * t), Color.Lerp(p0.c, p1.c, t));
+      r = new Vector2f(sx + signX * round(dx * t), sy + signY * slope * round(dx * t));
+      //r = new Pixel(sx + signX * round(dx * t), sy + signY * slope * round(dx * t), Color.Lerp(p0.c, p1.c, t));
     }
     else 
     {
       float slope = round(dx / dy);
-      r = new Pixel(sx + signX * slope * round(dy * t), sy + signY * round(dy * t), Color.Lerp(p0.c, p1.c, t));
+      r = new Vector2f(sx + signX * slope * round(dy * t), sy + signY * round(dy * t));
+      //r = new Pixel(sx + signX * slope * round(dy * t), sy + signY * round(dy * t), Color.Lerp(p0.c, p1.c, t));
     }  
     
     return r;
@@ -272,15 +279,15 @@ static class Edge
   
   int Length()
   {
-    float dy = abs(p1.y - p0.y);
-    float dx = abs(p1.x - p0.x);
+    int dy = abs(ceil(p1.y) - floor(p0.y));
+    int dx = abs(ceil(p1.x) - floor(p0.x));
     if(dx > dy)
     {
-      return ceil(dx);
+      return dx;
     }
     else
     {
-      return ceil(dy);
+      return dy;
     }
   }
   
@@ -314,18 +321,18 @@ static class Rasterizer
     return r;
   }
   
-  static ArrayList<Pixel> TriangleFan(PImage tex, Vertex[] vertices)
+  static ArrayList<Pixel> TriangleFan(Vertex[] vertices, PImage tex)
   {
     ArrayList<Pixel> r = new ArrayList<Pixel>();
     
     for(int i=2;i<vertices.length;i++)
     {
-      r.addAll(Triangle(tex, vertices[0], vertices[i-1], vertices[i]));
+      r.addAll(Triangle(vertices[0], vertices[i-1], vertices[i], tex));
     }
     return r;
   }
   
-  static ArrayList<Pixel> Triangle(PImage tex, Vertex v0, Vertex v1, Vertex v2)
+  static ArrayList<Pixel> Triangle(Vertex v0, Vertex v1, Vertex v2, PImage tex)
   {
     ArrayList<Pixel> r = new ArrayList<Pixel>();
     
@@ -414,26 +421,16 @@ static class Rasterizer
         Edge e = new Edge(line.intersectX.get(i), line.intersectX.get(i+1));
         int len = e.Length();
         
-        for(int j=0;j<len;++j)
+        for(int j=0;j<=len;++j)
         {
           float t = j/(float)len;
-          Pixel p = e.Interpolate(t);
+          Vector2f v = e.Interpolate(t);
+          Pixel p = new Pixel(v.x, v.y, Color.Lerp(e.p0.c, e.p1.c, t));
           ret.add(p);
         }
       }
     }
-    
     return ret;
-  }
-  
-  // https://www.slideshare.net/AnkitGarg22/polygon-filling-75128608
-  // https://hackernoon.com/computer-graphics-scan-line-polygon-fill-algorithm-3cb47283df6
-  // http://www.it.uu.se/edu/course/homepage/grafik1/ht05/Lectures/L02/LinePolygon/x_polyd.htm
-  static ArrayList<Pixel> ScanLine(Polygon2D polygon)
-  {
-    ArrayList<Pixel> r = new ArrayList<Pixel>();
-    
-    return r;
   }
   
   static ArrayList<Pixel> ScanLine(Vertex[] polygon)
@@ -451,18 +448,24 @@ static class Rasterizer
     
     aet.Create();
     
-    for(ScanLine line : aet.lines)
+    for(int w=0;w<aet.lines.length;w++)
     {
+      ScanLine line = aet.lines[w];
       int size = line.intersectX.size();
+      
       for(int i=0; i < size && size % 2 == 0; i+=2)
       {
-        Edge e = new Edge(line.intersectX.get(i), line.intersectX.get(i+1));
-        int len = e.Length();
+        Vertex v0 = line.intersectX.get(i);
+        Vertex v1 = line.intersectX.get(i+1);
         
-        for(int j=0;j<len;++j)
+        int minX = floor(min(v0.x, v1.x));
+        int maxX = ceil(max(v0.x, v1.x));
+        int len = abs(maxX - minX);
+        
+        for(int j=0;j<=len;++j)
         {
           float t = j/(float)len;
-          Pixel p = e.Interpolate(t);
+          Pixel p = new Pixel(lerp(v0.x, v1.x, t), v0.y, Color.Lerp(v0.c, v1.c, t));
           ret.add(p);
         }
       }
@@ -470,6 +473,66 @@ static class Rasterizer
     
     return ret;
   }
+  
+  static ArrayList<Pixel> ScanLine(Vertex[] polygon, PImage tex)
+  {
+    ArrayList<Pixel> ret = new ArrayList<Pixel>();
+    
+    Edge[] edges = new Edge[polygon.length];
+    for(int i=1;i< polygon.length;i++)
+    {
+      edges[i-1] = new Edge(polygon[i-1], polygon[i]);
+    }
+    edges[edges.length-1] = new Edge(polygon[polygon.length-1], polygon[0]);
+    
+    AET aet = new AET(edges);
+    
+    aet.Create();
+    
+    for(ScanLine line : aet.lines)
+    {
+      int size = line.intersectX.size();
+      
+      for(int i=0; i < size && size % 2 == 0; i+=2)
+      {
+        Vertex v0 = line.intersectX.get(i);
+        Vertex v1 = line.intersectX.get(i+1);
+        
+        int minX = floor(min(v0.x, v1.x));
+        int maxX = ceil(max(v0.x, v1.x));
+        int len = abs(maxX - minX);
+        
+        for(int j=0;j<=len;++j)
+        {
+          float t = j/(float)len;
+            
+          Vector2f uv = Vector2f.Lerp(v0.uv, v1.uv, t);
+          
+          uv.x *= tex.width;
+          uv.y *= tex.height;
+          
+          Color cc = new Color(tex.get((int)uv.x, (int)uv.y));
+          
+          Pixel p = new Pixel(lerp(v0.x, v1.x, t), v0.y, Color.Add(cc, Color.Lerp(v0.c, v1.c, t)));
+          ret.add(p);
+        }
+      }
+    }
+    
+    return ret;
+  }
+  
+  
+  // https://www.slideshare.net/AnkitGarg22/polygon-filling-75128608
+  // https://hackernoon.com/computer-graphics-scan-line-polygon-fill-algorithm-3cb47283df6
+  // http://www.it.uu.se/edu/course/homepage/grafik1/ht05/Lectures/L02/LinePolygon/x_polyd.htm
+  static ArrayList<Pixel> ScanLine(Polygon2D polygon)
+  {
+    ArrayList<Pixel> r = new ArrayList<Pixel>();
+    
+    return r;
+  }
+  
   
   static ArrayList<Pixel> DDALine(Vertex v0, Vertex v1)
   {
@@ -597,78 +660,6 @@ static class Rasterizer
     return r;
   }
    
-  // TODO : https://en.wikipedia.org/wiki/Weiler%E2%80%93Atherton_clipping_algorithm
-  // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
-  // Sutherland-Hodgman.
-  // It has some problem.
-  static Vertex[] SHClipping(float x, float y, float w, float h, Vertex[] vertices)
-  {
-    ArrayList<Vertex> r = new ArrayList<Vertex>();
-    
-    r.addAll(Arrays.asList(vertices));
-    
-    Vector3f[] p = new Vector3f[5];
-    
-    p[0] = new Vector3f(x, y);
-    p[1] = new Vector3f(x, y + h);
-    p[2] = new Vector3f(x + w, y + h);
-    p[3] = new Vector3f(x + w, y);
-    p[4] = new Vector3f(x, y);
-    
-    
-    // +---x 
-    // |      From x-axis to y-axis is clock wise. So these cross-product direction is like a screw pike direction.
-    // y
-    for(int i=1;i<p.length;++i)
-    {
-      Vector3f edge = Vector3f.Sub(p[i], p[i-1]);
-      edge.Normalize();
-      Vector3f right = Vector3f.Cross(edge, Vector3f.Backward);
-      
-      ArrayList<Vertex> in = new ArrayList<Vertex>(r);
-      r.clear();
-      
-      Vertex s = in.get(in.size()-1);
-      for(int j=0;j<in.size();++j)
-      {
-        Vertex e = in.get(j);
-        
-        Vector3f vs = Vector3f.Sub(p[i-1], s);
-        Vector3f ve = Vector3f.Sub(p[i-1], e);
-        
-        float dsy = Vector3f.Dot(vs, right);
-        float dey = Vector3f.Dot(ve, right);
-        
-        Boolean insideS = dsy >= 0;
-        Boolean insideE = dey >= 0;
-        
-        if(insideE)
-        {
-          if(!insideS)
-          {
-            Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i], false);
-            float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
-            Vertex n = new Vertex(v.x, v.y, 0, Vector2f.Lerp(s.uv, e.uv, t), Color.Lerp(s.c, e.c, t));
-            r.add(n);
-          }
-          r.add(e);
-        }
-        else if(insideS) 
-        {
-          Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i], false);
-          float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
-          Vertex n = new Vertex(v.x, v.y, 0, Vector2f.Lerp(s.uv, e.uv, t), Color.Lerp(s.c, e.c, t));
-          r.add(n);
-        }
-        s = e;
-      }
-    }
-    
-    Vertex[] ret = new Vertex[r.size()];
-    r.toArray(ret);
-    return ret;
-  }
-  
   public static void DrawRect(PGraphics g, float x, float y, float w, float h)
   {
     g.line(x, y, x+w, y);

@@ -2,6 +2,10 @@ static class Vector2f
 {
   public static final Vector2f Zero = new Vector2f(0, 0);
   
+  public static final Vector2f Right = new Vector2f(1, 0);
+  
+  public static final Vector2f Up = new Vector2f(0, 1);
+  
   float x;
   float y;
   
