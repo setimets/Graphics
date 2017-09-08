@@ -35,8 +35,8 @@ static public class TestRenderer implements IRenderer
     
     Vertex[] box = new Vertex[]
     {
-      new Vertex(-x, y, z, new Vector2f(0, 0.5f)), new Vertex(x, y, z, new Vector2f(0.5f, 0.5f)),
-      new Vertex(x, -y, z, new Vector2f(0.5f, 0)), new Vertex(-x, -y, z, new Vector2f(0, 0)),
+      new Vertex(-x, y, z, new Vector2f(0, 1f)), new Vertex(x, y, z, new Vector2f(1f, 1f)),
+      new Vertex(x, -y, z, new Vector2f(1f, 0)), new Vertex(-x, -y, z, new Vector2f(0, 0)),
       
       new Vertex(x, y, -z, new Vector2f(0, 1)), new Vertex(-x, y, -z, new Vector2f(1, 1)),
       new Vertex(-x, -y, -z, new Vector2f(1, 0)), new Vertex(x, -y, -z, new Vector2f(0, 0)),
