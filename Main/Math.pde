@@ -588,10 +588,11 @@ static class Matrix4x4
     r.z = E[8] * p.x + E[9] * p.y + E[10] * p.z + E[11] * 1;
     float w = E[12] * p.x + E[13] * p.y + E[14] * p.z + E[15] * 1;
     
-    if(w != 1) {
-      r.z /= w;
+    if(w != 1) 
+    {
       r.x /= w;
       r.y /= w;
+      r.z /= w;
     }
     return r;
   }

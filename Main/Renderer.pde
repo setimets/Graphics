@@ -115,8 +115,8 @@ static public class TestRenderer implements IRenderer
       Vertex[] p = Clipping.SutherlandHodgman(10, 10, 320, 180, pt);
       
       ArrayList<Pixel> fb = new ArrayList<Pixel>();
-      //ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture);  
-      ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p, texture);
+      ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture);  
+      //ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p, texture);
       
       fb.addAll(fb0);
       
@@ -127,6 +127,44 @@ static public class TestRenderer implements IRenderer
     }
     
     Rasterizer.DrawRect(pg, 10, 10, 320, 180);
+  }
+}
+
+public class TestClippingRenderer implements IRenderer
+{
+  public void Render(PGraphics pg)
+  {
+    Vertex[] va = new Vertex[] 
+    { 
+      //new Vertex(mouseX, mouseY, 0f, Color.Green),
+      new Vertex(1f, 1f, 0f, Color.Red),
+      new Vertex(100f, 100f, 0f, Color.Red),
+      new Vertex(372, 38, 0f, Color.Green),
+      //new Vertex(11f, 40.3f, 0f, Color.Blue) 
+    };
+    Vertex[] vb = Clipping.SutherlandHodgman(10, 10, 320, 180, va);
+    
+    ArrayList<Pixel> fb = Rasterizer.ScanLine(vb);
+    
+    for(int i=0;i<fb.size();++i)
+    {
+      Pixel p = fb.get(i);
+      pg.set((int)p.x, (int)p.y, p.c.ToInt());
+    }
+    
+    pg.stroke(255, 255, 255);
+    pg.line(va[0].x, va[0].y, va[1].x, va[1].y);
+    pg.line(va[1].x, va[1].y, va[2].x, va[2].y);
+    pg.line(va[2].x, va[2].y, va[0].x, va[0].y);
+    Rasterizer.DrawRect(pg, 10, 10, 320, 180);
+    
+    for(int i=0;i<vb.length;++i)
+    {
+      Vertex v = vb[i];
+      pg.text("p"+i +" "+ (int)v.x + "," + (int)v.y, v.x, v.y);
+      pg.stroke(255, 0, 0);
+      pg.ellipse(v.x, v.y, 2, 2);
+    }
   }
 }
 
@@ -145,43 +183,14 @@ public class TestLineRenderer implements IRenderer
       new Vertex(8f, 40.3f, 0f, new Color(0f, 0f, 1f, 1f)) 
     };
     
-    ArrayList<Pixel> fb = Rasterizer.ScanLine(vb[0], vb[1], vb[2]);
     //ArrayList<Pixel> fb = Rasterizer.DrawBresenHamLine(vb[0], vb[1]);
     //ArrayList<Pixel> fb = Rasterizer.DrawDDALine(vb[0], vb[1]);
-    //ArrayList<Pixel> fb = Rasterizer.Triangle(vb[0], vb[1], vb[2]);
+    ArrayList<Pixel> fb = Rasterizer.Triangle(vb[0], vb[1], vb[2]);
     
     for(int i=0;i<fb.size();++i)
     {
       Pixel p = fb.get(i);
       pg.set((int)p.x, (int)p.y, p.c.ToInt());
     }
-  }
-}
-
-public class TestClippingRenderer implements IRenderer
-{
-  public void Render(PGraphics pg)
-  {
-    Vertex[] va = new Vertex[] 
-    { 
-      new Vertex(100f, 100f, 0f, Color.Red),
-      //new Vertex(365, 5, 0f, Color.Green),
-      new Vertex(mouseX, mouseY, 0f, Color.Green),
-      new Vertex(11f, 40.3f, 0f, Color.Blue) 
-    };
-    Vertex[] vb = Clipping.SutherlandHodgman(10, 10, 320, 180, va);
-    
-    ArrayList<Pixel> fb = Rasterizer.ScanLine(vb);
-    
-    for(int i=0;i<fb.size();++i)
-    {
-      Pixel p = fb.get(i);
-      pg.set((int)p.x, (int)p.y, p.c.ToInt());
-    }
-    
-    pg.line(va[0].x, va[0].y, va[1].x, va[1].y);
-    pg.line(va[1].x, va[1].y, va[2].x, va[2].y);
-    pg.line(va[2].x, va[2].y, va[0].x, va[0].y);
-    Rasterizer.DrawRect(pg, 10, 10, 320, 180);
   }
 }

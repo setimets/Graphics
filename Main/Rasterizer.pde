@@ -214,23 +214,31 @@ static class AET
     for(int i=0;i<len;++i)
     {
       ScanLine line = lines[i] = new ScanLine();
-      for(Edge e : edges)
+      Vector2f last = Vector2f.Zero;
+      
+      for(int j=0;j<edges.length;++j)
       {
+        Edge e = edges[j];
         Vector2f p = Line2D.Intersection(e.p0, e.p1, s0, s1);
         s0.y = s1.y = minY + i;
         
         if(p.x == Float.POSITIVE_INFINITY || p.y == Float.POSITIVE_INFINITY)
           continue;
-        
+          
         if(!(Float.isNaN(p.x) || Float.isNaN(p.y)))
         {
           float t = Vector2f.Distance(e.p0, p) / Vector2f.Distance(e.p1, e.p0);
           Color c = Color.Lerp(e.p0.c, e.p1.c, t);
           Vector2f uv = Vector2f.Lerp(e.p0.uv, e.p1.uv, t);
-          line.intersectX.add(new Vertex(p.x, minY + i, 0, uv, c));
+          
+          if(last.x == p.x && last.y == minY + i)
+            continue;
+          
+          Vertex v = new Vertex(p.x, minY + i, 0, uv, c);
+          line.intersectX.add(v);
+          
+          last = v;
         }
-        //else
-        //  println(s0.y);
       }
     }
   }
@@ -245,10 +253,10 @@ static class Edge
   
   Edge(Vertex p0, Vertex p1)
   {
-    this.p0 = p0;
-    this.p1 = p1;
+    this.p0 = new Vertex((int)p0.x, (int)p0.y, p0.z, p0.uv, p0.c);
+    this.p1 = new Vertex((int)p1.x, (int)p1.y, p1.z, p1.uv, p1.c);
     
-    points = new Vertex[] { p0, p1 };
+    points = new Vertex[] { this.p0, this.p1 };
   }
   
   Vector2f Interpolate(float t)
@@ -406,33 +414,6 @@ static class Rasterizer
     return r;
   }
   
-  static ArrayList<Pixel> ScanLine(Vertex v0, Vertex v1, Vertex v2)
-  {
-    ArrayList<Pixel> ret = new ArrayList<Pixel>();
-    AET aet = new AET(new Edge[] { new Edge(v0, v1), new Edge(v1, v2), new Edge(v2, v0) });
-    
-    aet.Create();
-    
-    for(ScanLine line : aet.lines)
-    {
-      int size = line.intersectX.size();
-      for(int i=0; i < size && size % 2 == 0; i+=2)
-      {
-        Edge e = new Edge(line.intersectX.get(i), line.intersectX.get(i+1));
-        int len = e.Length();
-        
-        for(int j=0;j<=len;++j)
-        {
-          float t = j/(float)len;
-          Vector2f v = e.Interpolate(t);
-          Pixel p = new Pixel(v.x, v.y, Color.Lerp(e.p0.c, e.p1.c, t));
-          ret.add(p);
-        }
-      }
-    }
-    return ret;
-  }
-  
   static ArrayList<Pixel> ScanLine(Vertex[] polygon)
   {
     ArrayList<Pixel> ret = new ArrayList<Pixel>();
@@ -453,10 +434,10 @@ static class Rasterizer
       ScanLine line = aet.lines[w];
       int size = line.intersectX.size();
       
-      for(int i=0; i < size && size % 2 == 0; i+=2)
+      for(int i=1; i < size; i++)
       {
-        Vertex v0 = line.intersectX.get(i);
-        Vertex v1 = line.intersectX.get(i+1);
+        Vertex v0 = line.intersectX.get(i-1);
+        Vertex v1 = line.intersectX.get(i);
         
         int minX = floor(min(v0.x, v1.x));
         int maxX = ceil(max(v0.x, v1.x));
@@ -493,10 +474,10 @@ static class Rasterizer
     {
       int size = line.intersectX.size();
       
-      for(int i=0; i < size && size % 2 == 0; i+=2)
+      for(int i=1; i < size; i++)
       {
-        Vertex v0 = line.intersectX.get(i);
-        Vertex v1 = line.intersectX.get(i+1);
+        Vertex v0 = line.intersectX.get(i-1);
+        Vertex v1 = line.intersectX.get(i);
         
         int minX = floor(min(v0.x, v1.x));
         int maxX = ceil(max(v0.x, v1.x));
