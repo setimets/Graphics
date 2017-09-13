@@ -150,9 +150,9 @@ static class Vector3f extends Vector2f
   
   public static final Vector3f Left = new Vector3f(-1, 0, 0);
   
-  public static final Vector3f Top = new Vector3f(0, 1, 0);
+  public static final Vector3f Up = new Vector3f(0, 1, 0);
   
-  public static final Vector3f Bottom = new Vector3f(0, -1, 0);
+  public static final Vector3f Down = new Vector3f(0, -1, 0);
   
   public static final Vector3f Forward = new Vector3f(0, 0, 1);
   
@@ -368,9 +368,16 @@ static class Matrix3x3
     return r;
   }
 }
- 
+
+// It uses the column major convention. But when it is calculated, it uses row major like an OpenGL.
+// https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/row-major-vs-column-major-vector
 static class Matrix4x4
 {
+  public static final Matrix4x4 Identity = new Matrix4x4(new float[]{1, 0, 0, 0,
+                                                                     0, 1, 0, 0,
+                                                                     0, 0, 1, 0,
+                                                                     0, 0, 0, 1 });
+  
   float[] E;
   
   Matrix4x4(float[] ma)
@@ -573,21 +580,34 @@ static class Matrix4x4
   PVector TransformVector(PVector p)
   {
     PVector r = new PVector(); 
+    
     r.x = E[0] * p.x + E[1] * p.y + E[2] * p.z + E[3] * 1;
     r.y = E[4] * p.x + E[5] * p.y + E[6] * p.z + E[7] * 1;
     r.z = E[8] * p.x + E[9] * p.y + E[10] * p.z + E[12] * 1;
     
+    /*
+    r.x = E[0] * p.x + E[4] * p.y + E[8] * p.z + E[12] * 1;
+    r.y = E[1] * p.x + E[5] * p.y + E[9] * p.z + E[13] * 1;
+    r.z = E[2] * p.x + E[6] * p.y + E[10] * p.z + E[14] * 1;
+    */
     return r;
   }
   
   PVector TransformPoint(PVector p)
   {
     PVector r = new PVector(); 
+    
     r.x = E[0] * p.x + E[1] * p.y + E[2] * p.z + E[3] * 1;
     r.y = E[4] * p.x + E[5] * p.y + E[6] * p.z + E[7] * 1;
     r.z = E[8] * p.x + E[9] * p.y + E[10] * p.z + E[11] * 1;
     float w = E[12] * p.x + E[13] * p.y + E[14] * p.z + E[15] * 1;
     
+    /*
+    r.x = E[0] * p.x + E[4] * p.y + E[8] * p.z + E[12] * 1;
+    r.y = E[1] * p.x + E[5] * p.y + E[9] * p.z + E[13] * 1;
+    r.z = E[2] * p.x + E[6] * p.y + E[10] * p.z + E[14] * 1;
+    float w = E[3] * p.x + E[7] * p.y + E[11] * p.z + E[15] * 1;
+    */
     if(w != 1) 
     {
       r.x /= w;
@@ -597,19 +617,29 @@ static class Matrix4x4
     return r;
   }
   
-  // TODO : change to vector3
+  // Opengl's convention.
   Vector3f TransformPoint(Vector3f p)
   {
     Vector3f r = new Vector3f(); 
+    
+    // column-major
     r.x = E[0] * p.x + E[1] * p.y + E[2] * p.z + E[3] * 1;
     r.y = E[4] * p.x + E[5] * p.y + E[6] * p.z + E[7] * 1;
     r.z = E[8] * p.x + E[9] * p.y + E[10] * p.z + E[11] * 1;
     float w = E[12] * p.x + E[13] * p.y + E[14] * p.z + E[15] * 1;
     
+    /*
+    // row-major
+    r.x = E[0] * p.x + E[4] * p.y + E[8] * p.z + E[12] * 1;
+    r.y = E[1] * p.x + E[5] * p.y + E[9] * p.z + E[13] * 1;
+    r.z = E[2] * p.x + E[6] * p.y + E[10] * p.z + E[14] * 1;
+    float w = E[3] * p.x + E[7] * p.y + E[11] * p.z + E[15] * 1;
+    */
+    
     if(w != 1) {
-      r.z /= w;
       r.x /= w;
       r.y /= w;
+      r.z /= w;
     }
     return r;
   }
@@ -645,23 +675,15 @@ static class Matrix4x4
     return new Matrix4x4(sm);
   }
   
-  static Matrix4x4 LookAt(PVector pos, PVector target, PVector up)
+  static Matrix4x4 LookAtRH(Vector3f pos, Vector3f target, Vector3f up)
   {
-    PVector z = PVector.sub(target, pos);
-    z.normalize();
+    Vector3f z = Vector3f.Sub(target, pos);
+    z.Normalize();
     
-    PVector x = up.cross(z);
-    x.normalize();
+    Vector3f x = Vector3f.Cross(up, z);
+    x.Normalize();
     
-    PVector y = z.cross(x);
-    
-    float[] cm = new float[]
-    {
-      x.x, y.x, z.x, 0,
-      x.y, y.y, z.y, 0,
-      x.z, y.z, z.z, 0,
-      0,0,0,1
-    };
+    Vector3f y = Vector3f.Cross(z, x);
     
     float[] tm = new float[]
     {
@@ -671,7 +693,35 @@ static class Matrix4x4
       0, 0, 0, 1,
     };
     
-    return new Matrix4x4(Multiply(tm, cm));
+    float[] cm = new float[]
+    {
+      x.x, y.x, z.x, 0,
+      x.y, y.y, z.y, 0,
+      x.z, y.z, z.z, 0,
+      0,0,0,1
+    };
+    
+    Matrix4x4 r = new Matrix4x4(Multiply(cm, tm));
+    //return new Matrix4x4(cm);
+    return r; //<>//
+  }
+  
+  static Matrix4x4 Perspective(float fov, float aspect, float near, float far)
+  {
+    float n = near;
+    float f = far;
+    float t = tan(fov);
+    float h = 1 / t;
+    
+    float[] pm = new float[]
+    {
+      h / aspect , 0, 0, 0,
+      0, h, 0, 0,
+      0, 0, -(f+n)/(f-n), -2f / (f-n),
+      0, 0, -1, 0
+    };
+    
+    return new Matrix4x4(pm);
   }
   
   static Matrix4x4 Perspective(int screenW, int screenH, float angle, float near, float far)
@@ -687,8 +737,8 @@ static class Matrix4x4
     {
       h / aspect , 0, 0, 0,
       0, h, 0, 0,
-      0, 0,  (f+n) / (n-f), -1,
-      0, 0, (2*n*f) / (n-f), 0
+      0, 0, -(f+n)/(f-n), -2f / (f-n),
+      0, 0, -1, 0
     };
     
     return new Matrix4x4(pm);
@@ -732,6 +782,19 @@ static class Matrix4x4
     });
     return rm;
   }
+  
+  // Z-Axis
+  static Matrix4x4 Translate(float x, float y, float z)
+  {
+    Matrix4x4 rm = new Matrix4x4(new float[]
+    {
+      1, 0, 0, x,
+      0, 1, 0, y,
+      0, 0, 1, z,
+      0, 0, 0, 1
+    });
+    return rm;
+  }
 }
 
 // https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
@@ -740,8 +803,8 @@ static class Matrix4x4
 // https://gist.github.com/shihyu/c5abf3ebff2f5f1cfd32a90968f04a3b
 static class Quaternion 
 {
-  final Quaternion Identity = new Quaternion(1, 0, 0, 0);  
-  
+  public static final Quaternion Identity = new Quaternion(1, 0, 0, 0);  
+    
   float x, y, z, w;
   
   public Quaternion() { }

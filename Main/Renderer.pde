@@ -18,9 +18,9 @@ static public class TestRenderer implements IRenderer
   
   void Render(PGraphics pg) 
   {
-    float x = 50;
-    float y = 50;
-    float z = 50;
+    float x = 10;
+    float y = 10;
+    float z = 10;
     
     /*
     Vertex[] box = new Vertex[]
@@ -46,33 +46,27 @@ static public class TestRenderer implements IRenderer
     
     rad += 0.01f;
     
-    Matrix4x4 tm = new Matrix4x4(new float[]
-    {
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, -200 + -100 * sin(rad),
-      0, 0, 0, 1
-    });
-    
     // pitch
-    Matrix4x4 rm = Matrix4x4.Pitch(rad);
+    // TRS = (T * (R * S))
+    Matrix4x4 T = Matrix4x4.Translate(0, 0, 0);
+    Matrix4x4 R = Matrix4x4.Pitch(rad);
+    Matrix4x4 S = Matrix4x4.Identity;
     
-    Matrix4x4 sm = Matrix4x4.Viewport(10, 10, 320, 180);
-    Matrix4x4 pm = Matrix4x4.Perspective(pg.width, pg.height, 45f, 1, 1000);
+    Matrix4x4 TRS = Matrix4x4.Multiply(T, Matrix4x4.Multiply(R, S));
+    Matrix4x4 V = Matrix4x4.LookAtRH(new Vector3f(0, 0, -50 - sin(rad) * 25), new Vector3f(0, 0, 50 + -100 * sin(rad)), new Vector3f(0, 1, 0));
+    Matrix4x4 P = Matrix4x4.Perspective(pg.width, pg.height, 45f, 1, 1000);
     
-    Matrix4x4 mm = Matrix4x4.Multiply(tm, rm);
-    Matrix4x4 wm = mm;
+    // MVP = ((P * (V * M))
+    Matrix4x4 PVM = Matrix4x4.Multiply(P, Matrix4x4.Multiply(V, TRS));
     
-    //float[][] vm = Camera(new PVector(1, 0, 0), new PVector(0, 1, 0), new PVector(0, 0, 1), new PVector(sin(r) * 50, 0, -50));
-    Matrix4x4 vm = Matrix4x4.LookAt(new PVector(sin(rad) * 50, 0, -50), new PVector(0, 0, -200 + -100 * sin(rad)), new PVector(0, 1, 0));
-    Matrix4x4 wvp = Matrix4x4.Multiply(Matrix4x4.Multiply(pm, vm), wm);
-    Matrix4x4 tt = Matrix4x4.Multiply(sm, wvp);
+    // NDC = (S * PVM)
+    Matrix4x4 NDC = Matrix4x4.Multiply(Matrix4x4.Viewport(10, 10, 320, 180), PVM);
     
     Vertex[] pa = new Vertex[box.length];
     
     for(int i=0;i<box.length;++i)
     {
-       Vector3f v = tt.TransformPoint(box[i]);
+       Vector3f v = NDC.TransformPoint(box[i]);
        pa[i] = new Vertex(v, box[i].uv, box[i].c);
     }
 
@@ -113,6 +107,9 @@ static public class TestRenderer implements IRenderer
         continue;
       
       Vertex[] p = Clipping.SutherlandHodgman(10, 10, 320, 180, pt);
+      
+      if(p == null)
+        continue;
       
       ArrayList<Pixel> fb = new ArrayList<Pixel>();
       ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture);  

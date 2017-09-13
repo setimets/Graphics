@@ -30,8 +30,13 @@ static class Clipping
       ArrayList<Vertex> in = new ArrayList<Vertex>(r);
       r.clear();
       
-      Vertex s = in.get(in.size()-1);
-      for(int j=0;j<in.size();++j)
+      int len = in.size();
+      
+      if(len == 0)
+        return null;
+      
+      Vertex s = in.get(len-1);
+      for(int j=0;j<len;++j)
       {
         Vertex e = in.get(j);
         
