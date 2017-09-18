@@ -55,7 +55,7 @@ static class Clipping
           {
             Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i], false);
             float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
-            Vertex n = new Vertex(v.x, v.y, 0, Vector2f.Lerp(s.uv, e.uv, t), Color.Lerp(s.c, e.c, t));
+            Vertex n = new Vertex(v.x, v.y, lerp(s.z, e.z, t), Vector2f.Lerp(s.uv, e.uv, t), Color.Lerp(s.c, e.c, t));
             r.add(n);
           }
           r.add(e);
@@ -64,7 +64,7 @@ static class Clipping
         {
           Vector2f v = Line2D.Intersection(s, e, p[i-1], p[i], false);
           float t = Vector2f.Distance(s, v) / Vector2f.Distance(s, e);
-          Vertex n = new Vertex(v.x, v.y, 0, Vector2f.Lerp(s.uv, e.uv, t), Color.Lerp(s.c, e.c, t));
+          Vertex n = new Vertex(v.x, v.y, lerp(s.z, e.z, t), Vector2f.Lerp(s.uv, e.uv, t), Color.Lerp(s.c, e.c, t));
           r.add(n);
         }
         s = e;

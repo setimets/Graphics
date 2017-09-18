@@ -47,26 +47,27 @@ static public class TestRenderer implements IRenderer
     rad += 0.01f;
     
     // pitch
-    // TRS = (T * (R * S))
-    Matrix4x4 T = Matrix4x4.Translate(0, 0, 0);
+    Matrix4x4 T = Matrix4x4.Translate(10, 0, 100);
     Matrix4x4 R = Matrix4x4.Pitch(rad);
     Matrix4x4 S = Matrix4x4.Identity;
     
-    Matrix4x4 TRS = Matrix4x4.Multiply(T, Matrix4x4.Multiply(R, S));
+    // TRS = ((T * R) * S)
+    Matrix4x4 TRS = Matrix4x4.Multiply(Matrix4x4.Multiply(T, R), S);
     Matrix4x4 V = Matrix4x4.LookAtRH(new Vector3f(0, 0, -50 - sin(rad) * 25), new Vector3f(0, 0, 50 + -100 * sin(rad)), new Vector3f(0, 1, 0));
     Matrix4x4 P = Matrix4x4.Perspective(pg.width, pg.height, 45f, 1, 1000);
     
-    // MVP = ((P * (V * M))
-    Matrix4x4 PVM = Matrix4x4.Multiply(P, Matrix4x4.Multiply(V, TRS));
+    // MVP = ((P * V) * M)
+    Matrix4x4 PVM = Matrix4x4.Multiply(Matrix4x4.Multiply(P, V), TRS);
     
-    // NDC = (S * PVM)
-    Matrix4x4 NDC = Matrix4x4.Multiply(Matrix4x4.Viewport(10, 10, 320, 180), PVM);
+    // Screen Space = SRT * PV * SS * vector  Direct X
+    // Screen Space = vector * (SS * (PV * Parent * TRS)) Opengl
+    Matrix4x4 SS = Matrix4x4.Multiply(Matrix4x4.Viewport(10, 10, 320, 180), PVM);
     
     Vertex[] pa = new Vertex[box.length];
     
     for(int i=0;i<box.length;++i)
     {
-       Vector3f v = NDC.TransformPoint(box[i]);
+       Vector3f v = SS.TransformPoint(box[i]);
        pa[i] = new Vertex(v, box[i].uv, box[i].c);
     }
 
@@ -112,6 +113,9 @@ static public class TestRenderer implements IRenderer
         continue;
       
       ArrayList<Pixel> fb = new ArrayList<Pixel>();
+      
+      // TODO : Affine Problem
+      // http://www.cs.cornell.edu/courses/cs4620/2012fa/lectures/notes.pdf
       ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture);  
       //ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p, texture);
       

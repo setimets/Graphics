@@ -371,6 +371,7 @@ static class Matrix3x3
 
 // It uses the column major convention. But when it is calculated, it uses row major like an OpenGL.
 // https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/row-major-vs-column-major-vector
+// https://velitchko.wordpress.com/2013/02/04/basic-math-ii-welcome-to-the-matrix/
 static class Matrix4x4
 {
   public static final Matrix4x4 Identity = new Matrix4x4(new float[]{1, 0, 0, 0,
@@ -623,6 +624,9 @@ static class Matrix4x4
     Vector3f r = new Vector3f(); 
     
     // column-major
+    // [ 0 1  2  3 ][x]
+    // [ 4 5  6  7 ][y]
+    // [ 8 9 10 11 ][z]
     r.x = E[0] * p.x + E[1] * p.y + E[2] * p.z + E[3] * 1;
     r.y = E[4] * p.x + E[5] * p.y + E[6] * p.z + E[7] * 1;
     r.z = E[8] * p.x + E[9] * p.y + E[10] * p.z + E[11] * 1;
@@ -703,7 +707,7 @@ static class Matrix4x4
     
     Matrix4x4 r = new Matrix4x4(Multiply(cm, tm));
     //return new Matrix4x4(cm);
-    return r; //<>//
+    return r;
   }
   
   static Matrix4x4 Perspective(float fov, float aspect, float near, float far)
@@ -711,7 +715,7 @@ static class Matrix4x4
     float n = near;
     float f = far;
     float t = tan(fov);
-    float h = 1 / t;
+    float h = 1 / t; // cot
     
     float[] pm = new float[]
     {
@@ -731,7 +735,7 @@ static class Matrix4x4
     float f = far;
     float aspect = screenW/(float)screenH;
     float t = tan(fov);
-    float h = 1 / t;
+    float h = 1 / t; // cot
     
     float[] pm = new float[]
     {

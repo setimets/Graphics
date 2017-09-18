@@ -363,6 +363,15 @@ static class Rasterizer
           
           Vector2f uv = new Vector2f(uv0.x+uv1.x+uv2.x, uv0.y+uv1.y+uv2.y);
           
+          //float q = (float)((j - min.x)/(max.x - min.x));
+          
+          //println((j - min.x), (max.x - min.x), q);
+          
+          //float invz = 1/((1 / v0.z) * (1-q) + (1 / v1.z) * q);
+          
+          //uv.x *= invz;
+          //uv.y *= invz;
+          
           uv.x *= tex.width;
           uv.y *= tex.height;
           
