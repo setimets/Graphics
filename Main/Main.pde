@@ -10,10 +10,12 @@ void setup()
   size(640, 360);
   
   image = loadImage("drj.jpg");
+  //image = loadImage("checker.png");
   pg = createGraphics(640, 360);
   
   //renderer = new TestClippingRenderer();
   renderer = new TestRenderer(image);
+  //renderer = new TestPerpectiveCorrectMappingRenderer(image);
 }
 
 void draw() 

@@ -75,26 +75,26 @@ static class Line2D
 
 static class Rect
 {
-  Vector2f position;
+  Vector2f pos;
   Vector2f size;
   
   public Rect() { }
   
   public Rect(Vector2f pos, Vector2f size)
   {
-    this.position = pos;
+    this.pos = pos;
     this.size = size;
   }
   
   public Rect(float x, float y, float w, float h)
   {
-    position = new Vector2f(x, y);
+    pos = new Vector2f(x, y);
     size = new Vector2f(w, h);
   }
   
   public Rect(Rect rect)
   {
-    this.position = new Vector2f(rect.position);
+    this.pos = new Vector2f(rect.pos);
     this.size = new Vector2f(rect.size);
   }
   
@@ -149,17 +149,17 @@ static class Rect
   
   public Vector2f Center()
   {
-    return new Vector2f(position.x + size.x * 0.5f, position.y + size.y * 0.5f);
+    return new Vector2f(pos.x + size.x * 0.5f, pos.y + size.y * 0.5f);
   }
   
   public Vector2f Min()
   {
-    return new Vector2f(min(position.x, position.x + size.x), min(position.y, position.y + size.y));
+    return new Vector2f(min(pos.x, pos.x + size.x), min(pos.y, pos.y + size.y));
   }
   
   public Vector2f Max()
   {
-    return new Vector2f(max(position.x, position.x + size.x), max(position.y, position.y + size.y));
+    return new Vector2f(max(pos.x, pos.x + size.x), max(pos.y, pos.y + size.y));
   }
 }
 
@@ -214,6 +214,10 @@ static class Triangle
     return new PVector(l1, l2, l3);
   }
   
+  static float EdgeFunction(Vector2f p1, Vector2f p2, Vector2f p3)
+  {
+    return (p3.x-p1.x) * (p2.y - p1.y) - (p3.y - p1.y) * (p2.x - p1.x);
+  }
 }
 
 static class Polygon2D

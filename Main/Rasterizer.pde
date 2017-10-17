@@ -78,8 +78,9 @@ static class Color
 static class Vertex extends Vector3f
 {
   Vector3f normal;
-  Vector2f uv = Vector2f.Zero;
+  Vector2f uv = Vector3f.Zero;
   Color c = Color.Black;
+  float w;
   
   Vertex(){ }
   
@@ -99,12 +100,12 @@ static class Vertex extends Vector3f
     this.c = c;
   }
   
-  Vertex(float x, float y, float z, Vector2f uv)
+  Vertex(float x, float y, float z, Vector3f uvw)
   {
     this.x = x;
     this.y = y;
     this.z = z;
-    this.uv = uv;
+    this.uv = uvw;
   }
   
   Vertex(float x, float y, float z, Vector2f uv, Color c)
@@ -115,7 +116,6 @@ static class Vertex extends Vector3f
     this.c = c;
     this.uv = uv;
   }
-  
   
   Vertex(Vector3f v, Vector2f uv, Color c)
   {
@@ -353,29 +353,36 @@ static class Rasterizer
     {
       for(int j=(int)min.x;j<max.x;++j)
       {
-        PVector p = triangle.BarycentricCoords(new Vector2f(j, i));
+        Vector2f f = new Vector2f(j, i);
+        PVector p = triangle.BarycentricCoords(f);
         
         if(p.x >= 0 && p.y >= 0 && p.z >= 0)
         {
+          float v0w = 1f / v0.w;
+          float v1w = 1f / v1.w;
+          float v2w = 1f / v2.w;
+          
           Vector2f uv0 = Vector2f.Scale(v0.uv, p.x);
           Vector2f uv1 = Vector2f.Scale(v1.uv, p.y);
           Vector2f uv2 = Vector2f.Scale(v2.uv, p.z);
           
+          uv0 = Vector2f.Scale(uv0, v0w);
+          uv1 = Vector2f.Scale(uv1, v1w);
+          uv2 = Vector2f.Scale(uv2, v2w);
+          
           Vector2f uv = new Vector2f(uv0.x+uv1.x+uv2.x, uv0.y+uv1.y+uv2.y);
           
-          //float q = (float)((j - min.x)/(max.x - min.x));
+          //float w = 1;
+          float w = 1f / (p.x * v0w + p.y * v1w + p.z * v2w);
           
-          //println((j - min.x), (max.x - min.x), q);
-          
-          //float invz = 1/((1 / v0.z) * (1-q) + (1 / v1.z) * q);
-          
-          //uv.x *= invz;
-          //uv.y *= invz;
+          uv.x *= w;
+          uv.y *= w;
+          uv.y = 1 - uv.y;
           
           uv.x *= tex.width;
           uv.y *= tex.height;
           
-          Color cc = new Color(tex.get((int)uv.x, (int)uv.y));
+          Color cc = new Color(tex.get((int)uv.x , (int)uv.y));
           
           Color a = Color.Multify(v0.c, p.x);
           Color b = Color.Multify(v1.c, p.y);
@@ -648,6 +655,19 @@ static class Rasterizer
     }
     
     return r;
+  }
+  
+  public static void DrawLines(PGraphics g, Vector2f[] pa)
+  {
+    for(int i=1;i<pa.length;++i)
+    {
+      g.line(pa[i-1].x,pa[i-1].y, pa[i].x, pa[i].y);
+    }
+  }
+  
+  public static void DrawRect(PGraphics g, Rect rect)
+  {
+    DrawRect(g, rect.pos.x, rect.pos.y, rect.size.x, rect.size.y);
   }
    
   public static void DrawRect(PGraphics g, float x, float y, float w, float h)

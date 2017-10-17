@@ -236,6 +236,99 @@ static class Vector3f extends Vector2f
     r.Scale(Dot(v, r));
     return r;
   }
+  
+  static Vector3f Lerp(Vector3f s, Vector3f e, float t)
+  {
+    return new Vector3f(lerp(s.x, e.x, t), lerp(s.y, e.y, t), lerp(s.z, e.z, t));
+  }
+  
+  static Vector3f Scale(Vector3f v, float s)
+  {
+    return new Vector3f(v.x * s, v.y * s, v.z * s);
+  }
+}
+
+
+static class Vector4f extends Vector3f 
+{
+  float w;
+  
+  Vector4f() { }
+  
+  Vector4f(Vector3f v)
+  {
+    this.x = v.x;
+    this.y = v.y;
+    this.z = v.z;
+    this.w = 0;
+  }
+  
+  Vector4f(float x, float y, float z)
+  {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.w = 0;
+  }
+  
+  Vector4f(float x, float y, float z, float w)
+  {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.w = w;
+  }
+  
+  void Normalize()
+  {
+    float mag = Magnitude();
+    x = x / mag;
+    y = y / mag;
+    z = z / mag;
+    w = w / mag;
+  }
+  
+  float Magnitude()
+  {
+    return sqrt(x * x + y * y + z * z + w * w);
+  }
+  
+  float SqrMagnitude()
+  {
+    return x * x + y * y + z * z + w * w;
+  }
+  
+  static Vector4f Normalize(Vector4f v)
+  {
+    float mag = v.Magnitude();
+    Vector4f r = new Vector4f();
+    r.x = v.x / mag;
+    r.y = v.y / mag;
+    r.z = v.z / mag;
+    r.w = v.w / mag;
+    
+    return r;
+  }
+  
+  static Vector4f Add(Vector4f v0, Vector4f v1)
+  {
+    return new Vector4f(v0.x + v1.x, v0.y + v1.y, v0.z + v1.z, v0.w + v1.w);
+  }
+  
+  static Vector4f Sub(Vector4f v0, Vector4f v1)
+  {
+    return new Vector4f(v0.x - v1.x, v0.y - v1.y, v0.z - v1.z, v0.w - v1.w);
+  }
+  
+  static Vector4f Lerp(Vector4f s, Vector4f e, float t)
+  {
+    return new Vector4f(lerp(s.x, e.x, t), lerp(s.y, e.y, t), lerp(s.z, e.z, t), lerp(s.w, e.w, t));
+  }
+  
+  static Vector3f Scale(Vector3f v, float s)
+  {
+    return new Vector3f(v.x * s, v.y * s, v.z * s);
+  }
 }
 
 // Row major.
@@ -344,18 +437,18 @@ static class Matrix3x3
   }
   
   
-  Vector2f TransformVector(Vector2f p)
+  Vector3f TransformVector(Vector3f p)
   {
-    Vector2f r = new Vector2f(); 
-    r.x = E[0] * p.x + E[1] * p.y + E[2];
-    r.y = E[3] * p.x + E[4] * p.y + E[5];
-    
+    Vector3f r = new Vector3f(); 
+    r.x = E[0] * p.x + E[1] * p.y + E[2] * p.z;
+    r.y = E[3] * p.x + E[4] * p.y + E[5] * p.z;
+    r.z = E[6] * p.x + E[7] * p.y + E[8] * p.z;
     return r;
   }
   
-  Vector2f TransformPoint(Vector2f p)
+  Vector2f TransformPoint(Vector3f p)
   {
-    Vector2f r = new Vector2f(); 
+    Vector3f r = new Vector3f(); 
     r.x = E[0] * p.x + E[1] * p.y + E[2];
     r.y = E[4] * p.x + E[5] * p.y + E[6];
     
@@ -609,6 +702,7 @@ static class Matrix4x4
     r.z = E[2] * p.x + E[6] * p.y + E[10] * p.z + E[14] * 1;
     float w = E[3] * p.x + E[7] * p.y + E[11] * p.z + E[15] * 1;
     */
+    
     if(w != 1) 
     {
       r.x /= w;
@@ -653,6 +747,16 @@ static class Matrix4x4
     return new Matrix4x4(Multiply(m0.E, m1.E)); 
   }
   
+  static Vector4f Multiply(Matrix4x4 m, Vector3f v)
+  {
+    Vector4f r = new Vector4f(); 
+    r.x = m.E[0] * v.x + m.E[1] * v.y + m.E[2] * v.z + m.E[3] * 1; //<>//
+    r.y = m.E[4] * v.x + m.E[5] * v.y + m.E[6] * v.z + m.E[7] * 1;
+    r.z = m.E[8] * v.x + m.E[9] * v.y + m.E[10] * v.z + m.E[11] * 1;
+    r.w = m.E[12] * v.x + m.E[13] * v.y + m.E[14] * v.z + m.E[15] * 1;
+    return r;
+  }
+  
   static float[] Multiply(float[] m0, float[] m1)
   {
     float[] r = new float[m0.length];
@@ -679,37 +783,28 @@ static class Matrix4x4
     return new Matrix4x4(sm);
   }
   
-  static Matrix4x4 LookAtRH(Vector3f pos, Vector3f target, Vector3f up)
+  static Matrix4x4 LookAtRH(Vector3f eye, Vector3f target, Vector3f up)
   {
-    Vector3f z = Vector3f.Sub(target, pos);
-    z.Normalize();
+    Vector3f forward = Vector3f.Sub(eye, target);
+    forward.Normalize();
     
-    Vector3f x = Vector3f.Cross(up, z);
-    x.Normalize();
+    Vector3f right = Vector3f.Cross(forward, up);
+    right.Normalize();
     
-    Vector3f y = Vector3f.Cross(z, x);
+    Vector3f y = Vector3f.Cross(right, forward);
+    Vector3f e = Vector3f.Scale(eye, -1);
     
-    float[] tm = new float[]
+    float[] m = new float[]
     {
-      1, 0, 0, -pos.x,
-      0, 1, 0, -pos.y,
-      0, 0, 1, -pos.z,
-      0, 0, 0, 1,
+      right.x, y.x, forward.x, Vector3f.Dot(right, e),
+      right.y, y.y, forward.y, Vector3f.Dot(y, e),
+      right.z, y.z, forward.z, Vector3f.Dot(forward, e),
+      0, 0, 0, 1
     };
-    
-    float[] cm = new float[]
-    {
-      x.x, y.x, z.x, 0,
-      x.y, y.y, z.y, 0,
-      x.z, y.z, z.z, 0,
-      0,0,0,1
-    };
-    
-    Matrix4x4 r = new Matrix4x4(Multiply(cm, tm));
-    //return new Matrix4x4(cm);
-    return r;
+    return new Matrix4x4(m);
   }
   
+  // https://www.gamedev.net/articles/programming/graphics/perspective-projections-in-lh-and-rh-systems-r3598/
   static Matrix4x4 Perspective(float fov, float aspect, float near, float far)
   {
     float n = near;
@@ -721,7 +816,7 @@ static class Matrix4x4
     {
       h / aspect , 0, 0, 0,
       0, h, 0, 0,
-      0, 0, -(f+n)/(f-n), -2f / (f-n),
+      0, 0, (n+f)/(n-f), (2*n*f) / (n-f),
       0, 0, -1, 0
     };
     
@@ -741,7 +836,7 @@ static class Matrix4x4
     {
       h / aspect , 0, 0, 0,
       0, h, 0, 0,
-      0, 0, -(f+n)/(f-n), -2f / (f-n),
+      0, 0, (n+f)/(n-f), (2*n*f) / (n-f),
       0, 0, -1, 0
     };
     
@@ -749,21 +844,23 @@ static class Matrix4x4
   }
   
   // X-Axis
-  static Matrix4x4 Roll(float rad)
+  static Matrix4x4 Roll(float ang)
   {
+    float rad = ang * (PI/180);
     Matrix4x4 rm = new Matrix4x4(new float[]
     {
       1, 0, 0, 0,
-      0, cos(rad), -sin(rad),
-      0, sin(rad), cos(rad),
+      0, cos(rad), -sin(rad), 0,
+      0, sin(rad), cos(rad), 0,
       0, 0, 0, 1
     });
     return rm;
   }
   
   // Y-Axis
-  static Matrix4x4 Pitch(float rad)
+  static Matrix4x4 Pitch(float ang)
   {
+    float rad = ang * (PI/180);
     Matrix4x4 rm = new Matrix4x4(new float[]
     {
       cos(rad), 0, sin(rad), 0,
@@ -775,8 +872,9 @@ static class Matrix4x4
   }
   
   // Z-Axis
-  static Matrix4x4 Yaw(float rad)
+  static Matrix4x4 Yaw(float ang)
   {
+    float rad = ang * (PI/180);
     Matrix4x4 rm = new Matrix4x4(new float[]
     {
       cos(rad), -sin(rad), 0, 0,
@@ -800,6 +898,7 @@ static class Matrix4x4
     return rm;
   }
 }
+
 
 // https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
 // https://www.3dgep.com/understanding-quaternions/
