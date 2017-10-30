@@ -237,6 +237,12 @@ static class Vector3f extends Vector2f
     return r;
   }
   
+  static Vector3f Reflect(Vector3f v, Vector3f n)
+  {
+    Vector3f proj = Project(Scale(v, -1), Scale(n, 2));
+    return Add(v, proj);
+  }
+  
   static Vector3f Lerp(Vector3f s, Vector3f e, float t)
   {
     return new Vector3f(lerp(s.x, e.x, t), lerp(s.y, e.y, t), lerp(s.z, e.z, t));
@@ -687,6 +693,18 @@ static class Matrix4x4
     return r;
   }
   
+  
+  Vector3f TransformVector(Vector3f p)
+  {
+    Vector3f r = new Vector3f(); 
+    
+    r.x = E[0] * p.x + E[1] * p.y + E[2] * p.z + E[3] * 1;
+    r.y = E[4] * p.x + E[5] * p.y + E[6] * p.z + E[7] * 1;
+    r.z = E[8] * p.x + E[9] * p.y + E[10] * p.z + E[12] * 1;
+    
+    return r;
+  }
+  
   PVector TransformPoint(PVector p)
   {
     PVector r = new PVector(); 
@@ -750,7 +768,7 @@ static class Matrix4x4
   static Vector4f Multiply(Matrix4x4 m, Vector3f v)
   {
     Vector4f r = new Vector4f(); 
-    r.x = m.E[0] * v.x + m.E[1] * v.y + m.E[2] * v.z + m.E[3] * 1; //<>//
+    r.x = m.E[0] * v.x + m.E[1] * v.y + m.E[2] * v.z + m.E[3] * 1;
     r.y = m.E[4] * v.x + m.E[5] * v.y + m.E[6] * v.z + m.E[7] * 1;
     r.z = m.E[8] * v.x + m.E[9] * v.y + m.E[10] * v.z + m.E[11] * 1;
     r.w = m.E[12] * v.x + m.E[13] * v.y + m.E[14] * v.z + m.E[15] * 1;

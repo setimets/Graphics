@@ -335,16 +335,41 @@ static class Rasterizer
     
     for(int i=2;i<vertices.length;i++)
     {
-      r.addAll(Triangle(vertices[0], vertices[i-1], vertices[i], tex));
+      r.addAll(Triangle(vertices[0], vertices[i-1], vertices[i], tex, null));
     }
     return r;
   }
   
-  static ArrayList<Pixel> Triangle(Vertex v0, Vertex v1, Vertex v2, PImage tex)
+  static ArrayList<Pixel> TriangleFan(Vertex[] vertices, PImage tex, Light[] lights)
+  {
+    ArrayList<Pixel> r = new ArrayList<Pixel>();
+    
+    for(int i=2;i<vertices.length;i++)
+    {
+      r.addAll(Triangle(vertices[0], vertices[i-1], vertices[i], tex, lights));
+    }
+    return r;
+  }
+  
+  static ArrayList<Pixel> Triangle(Vertex v0, Vertex v1, Vertex v2, PImage tex, Light[] lights)
   {
     ArrayList<Pixel> r = new ArrayList<Pixel>();
     
     Triangle triangle = new Triangle(v0, v1, v2);
+    
+    float amount = 1;
+    if(lights != null)
+    {
+      for(int i=0;i<lights.length;++i)
+      {
+        for(int j=0;j<lights[i].direction.length;++j)
+        {
+          amount *= Vector3f.Dot(lights[i].direction[j], Vector3f.Scale(v0.normal, -1)) * lights[i].intensity;
+        }
+      }
+    }
+    
+    amount = abs(amount);
     
     PVector min = triangle.bounds.Min();
     PVector max = triangle.bounds.Max();
@@ -353,46 +378,58 @@ static class Rasterizer
     {
       for(int j=(int)min.x;j<max.x;++j)
       {
-        Vector2f f = new Vector2f(j, i);
-        PVector p = triangle.BarycentricCoords(f);
-        
-        if(p.x >= 0 && p.y >= 0 && p.z >= 0)
+        if( amount > 0) 
         {
-          float v0w = 1f / v0.w;
-          float v1w = 1f / v1.w;
-          float v2w = 1f / v2.w;
+          Vector2f f = new Vector2f(j, i);
+          PVector p = triangle.BarycentricCoords(f);
           
-          Vector2f uv0 = Vector2f.Scale(v0.uv, p.x);
-          Vector2f uv1 = Vector2f.Scale(v1.uv, p.y);
-          Vector2f uv2 = Vector2f.Scale(v2.uv, p.z);
-          
-          uv0 = Vector2f.Scale(uv0, v0w);
-          uv1 = Vector2f.Scale(uv1, v1w);
-          uv2 = Vector2f.Scale(uv2, v2w);
-          
-          Vector2f uv = new Vector2f(uv0.x+uv1.x+uv2.x, uv0.y+uv1.y+uv2.y);
-          
-          //float w = 1;
-          float w = 1f / (p.x * v0w + p.y * v1w + p.z * v2w);
-          
-          uv.x *= w;
-          uv.y *= w;
-          uv.y = 1 - uv.y;
-          
-          uv.x *= tex.width;
-          uv.y *= tex.height;
-          
-          Color cc = new Color(tex.get((int)uv.x , (int)uv.y));
-          
-          Color a = Color.Multify(v0.c, p.x);
-          Color b = Color.Multify(v1.c, p.y);
-          Color c = Color.Multify(v2.c, p.z);
-          
-          cc = Color.Add(cc, a);
-          cc = Color.Add(cc, b);
-          cc = Color.Add(cc, c);
-          
-          r.add(new Pixel(j, i, cc));
+          if(p.x >= 0 && p.y >= 0 && p.z >= 0)
+          {
+            float v0w = 1f / v0.w;
+            float v1w = 1f / v1.w;
+            float v2w = 1f / v2.w;
+            
+            Vector2f uv0 = Vector2f.Scale(v0.uv, p.x);
+            Vector2f uv1 = Vector2f.Scale(v1.uv, p.y);
+            Vector2f uv2 = Vector2f.Scale(v2.uv, p.z);
+            
+            uv0 = Vector2f.Scale(uv0, v0w);
+            uv1 = Vector2f.Scale(uv1, v1w);
+            uv2 = Vector2f.Scale(uv2, v2w);
+            
+            Vector2f uv = new Vector2f(uv0.x+uv1.x+uv2.x, uv0.y+uv1.y+uv2.y);
+            
+            //float w = 1;
+            // Perspective Correct
+            // https://github.com/truongascii/software_rasterizer/blob/master/source/rasterizer.cpp
+            // https://www.comp.nus.edu.sg/~lowkl/publications/lowk_persp_interp_techrep.pdf
+            float w = 1f / (p.x * v0w + p.y * v1w + p.z * v2w);
+            
+            uv.x *= w;
+            uv.y *= w;
+            uv.y = 1 - uv.y;
+            
+            uv.x *= tex.width;
+            uv.y *= tex.height;
+            
+            Color cc = new Color(tex.get((int)uv.x , (int)uv.y));
+            
+            Color a = Color.Multify(v0.c, p.x);
+            Color b = Color.Multify(v1.c, p.y);
+            Color c = Color.Multify(v2.c, p.z);
+            
+            cc = Color.Add(cc, a);
+            cc = Color.Add(cc, b);
+            cc = Color.Add(cc, c);
+            
+            cc = Color.Multify(cc, amount);
+            
+            r.add(new Pixel(j, i, cc));
+          }
+        }
+        else
+        {
+          r.add(new Pixel(j, i, new Color(0, 0, 0, 0)));
         }
       }
     }
@@ -655,6 +692,11 @@ static class Rasterizer
     }
     
     return r;
+  }
+  
+  public static void DrawLine(PGraphics g, Vector2f start, Vector2f end)
+  {
+    g.line(start.x, start.y, end.x, end.y);
   }
   
   public static void DrawLines(PGraphics g, Vector2f[] pa)

@@ -1,5 +1,4 @@
 
-
 interface IRenderer
 {
   void Render(PGraphics pg);
@@ -23,16 +22,15 @@ static public class TestRenderer implements IRenderer
     float y = 10;
     float z = 10;
     
-    /*
-    Vertex[] box = new Vertex[]
-    {
-      new Vertex(-x, y, z, Color.Red), new Vertex(x, y, z, Color.Green),
-      new Vertex(x, -y, z, Color.Blue), new Vertex(-x, -y, z, Color.Red),
+    
+    //Vertex[] box = new Vertex[]
+    //{
+    //  new Vertex(-x, y, -z, Color.Red), new Vertex(x, y, -z, Color.Green),
+    //  new Vertex(x, -y, -z, Color.Blue), new Vertex(-x, -y, -z, Color.Red),
       
-      new Vertex(x, y, -z, Color.Red), new Vertex(-x, y, -z, Color.Green),
-      new Vertex(-x, -y, -z, Color.Blue), new Vertex(x, -y, -z, Color.Red),
-    };
-    */
+    //  new Vertex(x, y, z, Color.Red), new Vertex(-x, y, z, Color.Green),
+    //  new Vertex(-x, -y, z, Color.Blue), new Vertex(x, -y, z, Color.Red),
+    //};
         
     Vertex[] box = new Vertex[]
     {
@@ -41,6 +39,10 @@ static public class TestRenderer implements IRenderer
       
       new Vertex(x, y, z, new Vector3f(0, 1)), new Vertex(-x, y, z, new Vector3f(1, 1)),
       new Vertex(-x, -y, z, new Vector3f(1, 0)), new Vertex(x, -y, z, new Vector3f(0, 0)),
+      
+      new Vertex(-x,y,-z, new Vector3f(0,0f)), new Vertex(x,y,-z, new Vector3f(1,0)),
+      new Vertex(-x,y,z, new Vector3f(0,1)), new Vertex(x,y,z, new Vector3f(1,1)),
+      
     };
     
     rad += 0.01f;
@@ -48,6 +50,7 @@ static public class TestRenderer implements IRenderer
     // pitch
     Matrix4x4 T = Matrix4x4.Translate(0, 0, 20);
     Matrix4x4 R = Matrix4x4.Pitch(rad * 100);
+    //Matrix4x4 R = Matrix4x4.Pitch(45);
     Matrix4x4 S = Matrix4x4.Identity;
     
     // TRS = (T * R * S)
@@ -83,6 +86,9 @@ static public class TestRenderer implements IRenderer
     
     int[] pi = new int[]
     {
+      6,3,2,
+      2,7,6, //down
+      
       0,3,2,
       2,1,0,
       1,2,7,
@@ -90,8 +96,21 @@ static public class TestRenderer implements IRenderer
       4,7,6,
       6,5,4,
       5,6,3,
-      3,0,5,      
+      3,0,5,
+
+      ////5,0,1,
+      ////1,4,5, //up
+      
+      8,9,10,
+      9,11,10, //up
+      
+      //0,1,2,
+      //1,3,2,
+      
     };
+    
+    Light light = new Light();
+    light.direction = new Vector3f[] { new Vector3f(0f, 1f, -1f) };
     
     for(int i=0;i<pi.length;i+=3)
     {
@@ -112,24 +131,35 @@ static public class TestRenderer implements IRenderer
       if(mat.Determinant() < 0)
         continue;
       
+      Vector3f v0 = Vector3f.Sub(pt[1], pt[0]);
+      Vector3f v1 = Vector3f.Sub(pt[2], pt[0]);
+      
+      v0.Normalize();
+      v1.Normalize();
+      
+      Vector3f nor = Vector3f.Cross(v0, v1);
+      
       Vertex[] ps = new Vertex[pt.length];
+      
       for(int k=0;k<pt.length;++k)
       {
+        
         Vector3f v = SS.TransformPoint(pt[k]);
         ps[k] = new Vertex(v, pt[k].uv, pt[k].c);
+        ps[k].normal = nor;
         ps[k].w = pt[k].w;
       }
-      
+
       Vertex[] p = Clipping.SutherlandHodgman(screen.pos.x, screen.pos.y, screen.size.x, screen.size.y, ps);
       
       if(p == null)
         continue;
       
-      ArrayList<Pixel> fb = new ArrayList<Pixel>();
+      ArrayList<Pixel> fb = new ArrayList<Pixel>(); 
       
-      // TODO : Affine Problem
       // http://www.cs.cornell.edu/courses/cs4620/2012fa/lectures/notes.pdf
-      ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture);  
+      ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture, new Light[] { light });
+      //ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture);
       //ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p, texture);
       
       fb.addAll(fb0);
@@ -180,14 +210,13 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
     
     // pitch
     Matrix4x4 T = Matrix4x4.Translate(pos.x, pos.y, pos.z);
-    Matrix4x4 R = Matrix4x4.Roll(45);
+    Matrix4x4 R = Matrix4x4.Roll(rad * 100);
     //Matrix4x4 R = Matrix4x4.Identity;
-    //R = Matrix4x4.Multiply(R, Matrix4x4.Pitch(45 * (PI/180)));
     Matrix4x4 S = Matrix4x4.Identity;
 
     Vector3f eye = new Vector3f(0, 10, -20);
     
-    // TRS = (T * R * S)
+    // TRS = (T * R * S) //<>//
     Matrix4x4 TRS = Matrix4x4.Multiply(T, Matrix4x4.Multiply(R, S));
     Matrix4x4 V = Matrix4x4.LookAtRH(eye, pos, Vector3f.Up);
     //Matrix4x4 V = Matrix4x4.LookAtRH(new Vector3f(0, 0, -50 - sin(rad) * 25), new Vector3f(0, 0, 50 + -100 * sin(rad)), new Vector3f(0, 1, 0));
@@ -217,6 +246,10 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
       pa[i].w = v.w;
     }
     
+    
+    Light light = new Light();
+    light.direction = new Vector3f[] { new Vector3f(0f, 0f, -1f) };
+    
     for(int i=0;i<pi.length;i+=3)
     {
       Vertex[] pt = new Vertex[]
@@ -236,11 +269,20 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
       if(mat.Determinant() < 0)
         continue;
       
+      Vector3f v0 = Vector3f.Sub(pt[0], pt[1]);
+      Vector3f v1 = Vector3f.Sub(pt[2], pt[1]);
+      
+      v0.Normalize();
+      v1.Normalize();
+      
+      Vector3f nor = Vector3f.Cross(v0, v1);
+      
       Vertex[] ps = new Vertex[pt.length];
       for(int k=0;k<ps.length;++k)
       {
         Vector3f v = SS.TransformPoint(pt[k]);
         ps[k] = new Vertex(v, pt[k].uv, pt[k].c);
+        ps[k].normal = pt[k].normal = nor;
         ps[k].w = pt[k].w;
       }
     
@@ -250,7 +292,7 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
         continue;
       
       ArrayList<Pixel> fb = new ArrayList<Pixel>();
-      ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture);  
+      ArrayList<Pixel> fb0 = Rasterizer.TriangleFan(p, texture, new Light[] { light });  
       //ArrayList<Pixel> fb0 = Rasterizer.ScanLine(p, texture);
       
       fb.addAll(fb0);
@@ -264,6 +306,10 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
       float cy = (pt[0].y + pt[1].y + pt[2].y)/3;
       pg.fill(255, 0, 0);
       pg.text("v", cx, cy);
+      
+      Vector3f norm = SS.TransformVector(Vector3f.Scale(pt[0].normal, 1));
+      
+      Rasterizer.DrawLine(pg, ps[0], Vector2f.Add(ps[0], norm));
       Rasterizer.DrawLines(pg, new Vertex[]{ ps[0], ps[1], ps[2], ps[0] });
     }
     

@@ -180,7 +180,7 @@ static class Triangle
     
     PVector min = new PVector(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
     PVector max = new PVector(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
-    
+        
     for(Vertex p : vertice)
     {
       min.x = min(min.x, p.x);
