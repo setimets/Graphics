@@ -364,15 +364,15 @@ static class Rasterizer
       {
         for(int j=0;j<lights[i].direction.length;++j)
         {
-          amount *= Vector3f.Dot(lights[i].direction[j], Vector3f.Scale(v0.normal, -1)) * lights[i].intensity;
+          amount *= Vector3f.Dot(Vector3f.Scale(lights[i].direction[j], -1), v0.normal) * lights[i].intensity;
         }
       }
     }
     
-    amount = abs(amount);
+    amount = constrain(amount, 0, 1);
     
-    PVector min = triangle.bounds.Min();
-    PVector max = triangle.bounds.Max();
+    PVector min = triangle.bounds.Min(); //<>//
+    PVector max = triangle.bounds.Max(); //<>//
     
     for(int i=(int)min.y;i<max.y;++i)
     {
@@ -429,7 +429,7 @@ static class Rasterizer
         }
         else
         {
-          r.add(new Pixel(j, i, new Color(0, 0, 0, 0)));
+          r.add(new Pixel(j, i, new Color(0, 0, 0, 1)));
         }
       }
     }

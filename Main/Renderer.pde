@@ -51,6 +51,7 @@ static public class TestRenderer implements IRenderer
     Matrix4x4 T = Matrix4x4.Translate(0, 0, 20);
     Matrix4x4 R = Matrix4x4.Pitch(rad * 100);
     //Matrix4x4 R = Matrix4x4.Pitch(45);
+    //Matrix4x4 R = Matrix4x4.Identity;
     Matrix4x4 S = Matrix4x4.Identity;
     
     // TRS = (T * R * S)
@@ -110,7 +111,7 @@ static public class TestRenderer implements IRenderer
     };
     
     Light light = new Light();
-    light.direction = new Vector3f[] { new Vector3f(0f, 1f, -1f) };
+    light.direction = new Vector3f[] { new Vector3f(0, cos(rad), sin(rad)) };
     
     for(int i=0;i<pi.length;i+=3)
     {
@@ -131,8 +132,8 @@ static public class TestRenderer implements IRenderer
       if(mat.Determinant() < 0)
         continue;
       
-      Vector3f v0 = Vector3f.Sub(pt[1], pt[0]);
-      Vector3f v1 = Vector3f.Sub(pt[2], pt[0]);
+      Vector3f v0 = TRS.TransformVector(Vector3f.Sub(box[pi[i]], box[pi[i+1]]));
+      Vector3f v1 = TRS.TransformVector(Vector3f.Sub(box[pi[i+2]], box[pi[i+1]]));
       
       v0.Normalize();
       v1.Normalize();
@@ -211,6 +212,7 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
     // pitch
     Matrix4x4 T = Matrix4x4.Translate(pos.x, pos.y, pos.z);
     Matrix4x4 R = Matrix4x4.Roll(rad * 100);
+    //Matrix4x4 R = Matrix4x4.Roll(90);
     //Matrix4x4 R = Matrix4x4.Identity;
     Matrix4x4 S = Matrix4x4.Identity;
 
@@ -218,6 +220,7 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
     
     // TRS = (T * R * S) //<>//
     Matrix4x4 TRS = Matrix4x4.Multiply(T, Matrix4x4.Multiply(R, S));
+    
     Matrix4x4 V = Matrix4x4.LookAtRH(eye, pos, Vector3f.Up);
     //Matrix4x4 V = Matrix4x4.LookAtRH(new Vector3f(0, 0, -50 - sin(rad) * 25), new Vector3f(0, 0, 50 + -100 * sin(rad)), new Vector3f(0, 1, 0));
     Matrix4x4 P = Matrix4x4.Perspective(pg.width, pg.height, 45f, 1, 1000);
@@ -245,10 +248,8 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
       pa[i] = new Vertex(v, box[i].uv, box[i].c);
       pa[i].w = v.w;
     }
-    
-    
     Light light = new Light();
-    light.direction = new Vector3f[] { new Vector3f(0f, 0f, -1f) };
+    light.direction = new Vector3f[] { new Vector3f(0f, 0f, 1f) };
     
     for(int i=0;i<pi.length;i+=3)
     {
@@ -269,8 +270,8 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
       if(mat.Determinant() < 0)
         continue;
       
-      Vector3f v0 = Vector3f.Sub(pt[0], pt[1]);
-      Vector3f v1 = Vector3f.Sub(pt[2], pt[1]);
+      Vector3f v0 = TRS.TransformVector(Vector3f.Sub(box[pi[i]], box[pi[i+1]]));
+      Vector3f v1 = TRS.TransformVector(Vector3f.Sub(box[pi[i+2]], box[pi[i+1]]));
       
       v0.Normalize();
       v1.Normalize();
@@ -307,9 +308,10 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
       pg.fill(255, 0, 0);
       pg.text("v", cx, cy);
       
-      Vector3f norm = SS.TransformVector(Vector3f.Scale(pt[0].normal, 1));
+      nor = PVM.TransformPoint(Vector3f.Scale(pt[0].normal, 10));
+      nor = SS.TransformPoint(Vector3f.Add(pt[0], nor));
       
-      Rasterizer.DrawLine(pg, ps[0], Vector2f.Add(ps[0], norm));
+      Rasterizer.DrawLine(pg, ps[0], nor);
       Rasterizer.DrawLines(pg, new Vertex[]{ ps[0], ps[1], ps[2], ps[0] });
     }
     
