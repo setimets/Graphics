@@ -49,8 +49,8 @@ static public class TestRenderer implements IRenderer
     
     // pitch
     Matrix4x4 T = Matrix4x4.Translate(0, 0, 20);
-    Matrix4x4 R = Matrix4x4.Pitch(rad * 100);
-    //Matrix4x4 R = Matrix4x4.Pitch(45);
+    //Matrix4x4 R = Matrix4x4.Pitch(rad * 100);
+    Matrix4x4 R = Matrix4x4.Pitch(45);
     //Matrix4x4 R = Matrix4x4.Identity;
     Matrix4x4 S = Matrix4x4.Identity;
     
@@ -77,6 +77,7 @@ static public class TestRenderer implements IRenderer
       }
       
       pa[i] = new Vertex(v, box[i].uv, box[i].c);
+      pa[i].world = TRS.TransformPoint(box[i]);
       pa[i].w = v.w;
     }
 
@@ -110,8 +111,11 @@ static public class TestRenderer implements IRenderer
       
     };
     
-    Light light = new Light();
-    light.direction = new Vector3f[] { new Vector3f(0, cos(rad), sin(rad)) };
+    //DirectionalLight light = new DirectionalLight(new Vector3f(cos(rad), -1, sin(rad)));
+    //DirectionalLight light = new DirectionalLight(new Vector3f(0, -1, 1));
+    PointLight light = new PointLight(90 * cos(rad));
+    light.position = new Vector3f(100 * cos(rad), 0, 100 * sin(rad));
+    light.c = Color.Red;
     
     for(int i=0;i<pi.length;i+=3)
     {
@@ -139,7 +143,6 @@ static public class TestRenderer implements IRenderer
       v1.Normalize();
       
       Vector3f nor = Vector3f.Cross(v0, v1);
-      
       Vertex[] ps = new Vertex[pt.length];
       
       for(int k=0;k<pt.length;++k)
@@ -149,6 +152,7 @@ static public class TestRenderer implements IRenderer
         ps[k] = new Vertex(v, pt[k].uv, pt[k].c);
         ps[k].normal = nor;
         ps[k].w = pt[k].w;
+        ps[k].world = pt[k].world;
       }
 
       Vertex[] p = Clipping.SutherlandHodgman(screen.pos.x, screen.pos.y, screen.size.x, screen.size.y, ps);
@@ -248,8 +252,8 @@ public class TestPerpectiveCorrectMappingRenderer implements IRenderer
       pa[i] = new Vertex(v, box[i].uv, box[i].c);
       pa[i].w = v.w;
     }
-    Light light = new Light();
-    light.direction = new Vector3f[] { new Vector3f(0f, 0f, 1f) };
+    
+    DirectionalLight light = new DirectionalLight(new Vector3f(0f, 0f, 1f));
     
     for(int i=0;i<pi.length;i+=3)
     {

@@ -45,12 +45,18 @@ static class Color
   
   public int ToInt()
   {
-    int aa = ((int)(a*255)) << 24;
-    int rr = ((int)(r*255)) << 16;
-    int gg = ((int)(g*255)) << 8;
-    int bb = ((int)(b*255));
+    int aa = ((int)(constrain(a, 0, 1)*255)) << 24;
+    int rr = ((int)(constrain(r, 0, 1)*255)) << 16;
+    int gg = ((int)(constrain(g, 0, 1)*255)) << 8;
+    int bb = ((int)(constrain(b, 0, 1)*255));
     
     return aa + rr + gg + bb;
+  }
+  
+  static Color Brightness(Color c, float v)
+  {
+    Color r = new Color(c.r * v, c.g * v, c.b * v, c.a);
+    return r;
   }
   
   static Color Multify(Color c, float v)
@@ -79,6 +85,7 @@ static class Vertex extends Vector3f
 {
   Vector3f normal;
   Vector2f uv = Vector3f.Zero;
+  Vector3f world;
   Color c = Color.Black;
   float w;
   
@@ -357,28 +364,36 @@ static class Rasterizer
     
     Triangle triangle = new Triangle(v0, v1, v2);
     
-    float amount = 1;
+    float v0r = 0;
+    float v1r = 0;
+    float v2r = 0;
+    
+    Color lc = Color.Black;
+    
     if(lights != null)
     {
       for(int i=0;i<lights.length;++i)
       {
-        for(int j=0;j<lights[i].direction.length;++j)
-        {
-          amount *= Vector3f.Dot(Vector3f.Scale(lights[i].direction[j], -1), v0.normal) * lights[i].intensity;
-        }
+        v0r += lights[i].Reflect(v0.world, v0.normal);
+        v1r += lights[i].Reflect(v1.world, v1.normal);
+        v2r += lights[i].Reflect(v2.world, v2.normal);
+        
+        lc = Color.Add(lc, lights[i].c);
       }
     }
     
-    amount = constrain(amount, 0, 1);
+    v0r = constrain(v0r, 0, 1);
+    v1r = constrain(v1r, 0, 1);
+    v2r = constrain(v2r, 0, 1);
     
-    PVector min = triangle.bounds.Min(); //<>//
-    PVector max = triangle.bounds.Max(); //<>//
+    PVector min = triangle.bounds.Min();
+    PVector max = triangle.bounds.Max();
     
     for(int i=(int)min.y;i<max.y;++i)
     {
       for(int j=(int)min.x;j<max.x;++j)
       {
-        if( amount > 0) 
+        if( v0r + v1r + v2r > 0) 
         {
           Vector2f f = new Vector2f(j, i);
           PVector p = triangle.BarycentricCoords(f);
@@ -392,6 +407,12 @@ static class Rasterizer
             Vector2f uv0 = Vector2f.Scale(v0.uv, p.x);
             Vector2f uv1 = Vector2f.Scale(v1.uv, p.y);
             Vector2f uv2 = Vector2f.Scale(v2.uv, p.z);
+            
+            //v0r *= p.x;
+            //v1r *= p.y;
+            //v2r *= p.z;
+            
+            float refl = (v0r + v1r + v2r) / 3f;
             
             uv0 = Vector2f.Scale(uv0, v0w);
             uv1 = Vector2f.Scale(uv1, v1w);
@@ -422,7 +443,10 @@ static class Rasterizer
             cc = Color.Add(cc, b);
             cc = Color.Add(cc, c);
             
-            cc = Color.Multify(cc, amount);
+            // ambient amount - 0.5f
+            
+            cc = Color.Lerp(cc, lc, 0.1f);
+            cc = Color.Brightness(cc, refl);
             
             r.add(new Pixel(j, i, cc));
           }

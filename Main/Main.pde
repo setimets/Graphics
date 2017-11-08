@@ -9,8 +9,8 @@ void setup()
 {
   size(640, 360);
   
-  //image = loadImage("drj.jpg");
-  image = loadImage("checker.png");
+  image = loadImage("drj.jpg");
+  //image = loadImage("checker.png");
   pg = createGraphics(640, 360);
   
   //renderer = new TestClippingRenderer();

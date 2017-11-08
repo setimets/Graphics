@@ -220,6 +220,11 @@ static class Vector3f extends Vector2f
     return new Vector3f(v0.x - v1.x, v0.y - v1.y, v0.z - v1.z);
   }
   
+  static float Distance(Vector3f v0, Vector3f v1)
+  {
+    return Sub(v1, v0).Magnitude();
+  }
+  
   static float Dot(Vector3f v0, Vector3f v1)
   {
     return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z;
